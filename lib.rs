@@ -3083,6 +3083,7 @@ mod geode_marketplace {
 
         // 35 🟢 View My (Buyer) Account
         // Front end: if the product/service inventory is zero, note as unavailable
+        #[ink(message)]
         pub fn view_my_buyer_account (&self) -> ViewBuyerAccount {
             // set the caller
             let caller = Self::env().caller();

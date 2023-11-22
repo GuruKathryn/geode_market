@@ -1336,8 +1336,36 @@ mod geode_marketplace {
             }
             // remove item from cart_items vector
             cart.cart_items.retain(|value| *value != (item_id, quantity));
-            // update the mappings
-            self.account_current_cart.insert(&caller, &cart);
+
+            // get the total number of items in the cart
+            let totalitems: u128 = cart.cart_items.len().try_into().unwrap();
+            // iterate through the cart items to get the total price of the cart
+            let mut carttotal: Balance = 0;
+            for (item, _number) in &cart.cart_items {
+                // get the price for that item
+                let mut item_price: Balance = 0;
+                if self.product_details.contains(&item) {
+                    item_price = self.product_details.get(&item).unwrap_or_default().price;
+                }
+                else {
+                    if self.service_details.contains(&item) {
+                        item_price = self.service_details.get(&item).unwrap_or_default().price;
+                    }
+                }
+                // add the price to the total price
+                carttotal += item_price;
+            }
+ 
+            // perpare the updated UnpaidCart
+            let updated_cart = UnpaidCart {
+                buyer: caller,
+                cart_total: carttotal,
+                total_items: totalitems,
+                cart_items: cart.cart_items
+            };
+ 
+            // update mappings
+            self.account_current_cart.insert(&caller, &updated_cart);           
             
             Ok(())
         }
@@ -1349,7 +1377,6 @@ mod geode_marketplace {
             item_id: Hash,
             new_quantity: u128
         ) -> Result<(), Error> {
-            // set up clones
             // set up the caller
             let caller = Self::env().caller();
             // get the caller's current unpaid cart id
@@ -1365,8 +1392,36 @@ mod geode_marketplace {
             cart.cart_items.retain(|value| *value != (item_id, quantity));
             // add the item with the new quantity to the cart_items vector
             cart.cart_items.push((item_id, new_quantity));
-            // update the mappings
-            self.account_current_cart.insert(&caller, &cart);
+
+            // get the total number of items in the cart
+            let totalitems: u128 = cart.cart_items.len().try_into().unwrap();
+            // iterate through the cart items to get the total price of the cart
+            let mut carttotal: Balance = 0;
+            for (item, _number) in &cart.cart_items {
+                // get the price for that item
+                let mut item_price: Balance = 0;
+                if self.product_details.contains(&item) {
+                    item_price = self.product_details.get(&item).unwrap_or_default().price;
+                }
+                else {
+                    if self.service_details.contains(&item) {
+                        item_price = self.service_details.get(&item).unwrap_or_default().price;
+                    }
+                }
+                // add the price to the total price
+                carttotal += item_price;
+            }
+ 
+            // perpare the updated UnpaidCart
+            let updated_cart = UnpaidCart {
+                buyer: caller,
+                cart_total: carttotal,
+                total_items: totalitems,
+                cart_items: cart.cart_items
+            };
+ 
+            // update mappings
+            self.account_current_cart.insert(&caller, &updated_cart);   
             
             Ok(())
         }
@@ -1384,12 +1439,40 @@ mod geode_marketplace {
             let rightnow = self.env().block_timestamp();
 
             // get the caller's unpaid cart
-            let cart = self.account_current_cart.get(&caller).unwrap_or_default();
+            let current_cart = self.account_current_cart.get(&caller).unwrap_or_default();
+
+            // UPDATE THE CART TOTAL AND REMOVE ITEMS THAT DO NOT HAVE ENOUGH INVENTORY
+            // make a new cart items vector to work with
+            let mut final_cart_items = <Vec<(Hash, u128)>>::default();
+            let mut item_inventory: u128 = 0;
+            let mut item_price: Balance = 0;
+            let mut carttotal: Balance = 0;
+            // iterate through the cart to keep only items that have enough inventory
+            for (item, number) in &current_cart.cart_items {
+                // get the inventory and price for that item
+                if self.product_details.contains(&item) {
+                    item_inventory = self.product_details.get(&item).unwrap_or_default().inventory;
+                    item_price = self.product_details.get(&item).unwrap_or_default().price;
+                }
+                else {
+                    if self.service_details.contains(&item) {
+                        item_inventory = self.service_details.get(&item).unwrap_or_default().inventory;
+                        item_price = self.service_details.get(&item).unwrap_or_default().price;
+                    }
+                }
+                // if the item has enough inventory, add it to the official cart items
+                if item_inventory >= *number {
+                    // add this item to the total price
+                    carttotal += item_price;
+                    // add this item and quantity to the final cart items vector
+                    final_cart_items.push((*item, *number));
+                } 
+            } 
             
             // COLLECT PAYMENT FROM THE CALLER
             // the 'payable' tag on this message allows the user to send any amount
             let amount_paid: Balance = self.env().transferred_value();
-            if amount_paid < cart.cart_total {
+            if amount_paid < carttotal {
                 // error, did not pay enough
                 return Err(Error::InsufficientPayment);
             }
@@ -1415,7 +1498,7 @@ mod geode_marketplace {
                 }
 
                 // FOR EACH ITEM IN THE CART ...
-                for (item, number) in &cart.cart_items {
+                for (item, number) in &final_cart_items {
 
                     // set up clones
                     let deliver_to_address_clone1 = deliver_to_address.clone();
@@ -1449,13 +1532,8 @@ mod geode_marketplace {
                             details.zeno_buyers.push(caller);
                         }
 
-                        // reduce the inventory on this item by the quantity bought (or list as zero)
-                        if details.inventory > *number {
-                            details.inventory -= *number;
-                        }
-                        else {
-                            details.inventory = 0;
-                        }
+                        // reduce the inventory on this item by the quantity bought
+                        details.inventory -= *number;
 
                         // update the product details map
                         self.product_details.insert(item, &details);
@@ -1664,7 +1742,7 @@ mod geode_marketplace {
                     cart_id: new_cart_id,
                     buyer: caller,
                     cart_timestamp: rightnow,
-                    cart_total: cart.cart_total,
+                    cart_total: carttotal,
                     deliver_to_address: deliver_to_address,
                     deliver_to_account: deliver_to_account,
                     orders: all_cart_orders, 
@@ -3201,6 +3279,8 @@ mod geode_marketplace {
             // set up return structures
             let mut cartproducts = <Vec<UnpaidCartProduct>>::default();
             let mut cartservices = <Vec<UnpaidCartService>>::default();
+            let mut carttotal_products: Balance = 0;
+            let mut carttotal_services: Balance = 0;
 
             // each item in current_cart.cart_items looks like (Hash, u128) meaning (itemid, quantity)
             // for each item, determine product or service
@@ -3231,6 +3311,11 @@ mod geode_marketplace {
                     // add that to the cartproducts vector
                     cartproducts.push(unpaidproduct);
 
+                    // add the price to the cart total for products IF there is enough inventory
+                    if productdetails.inventory >= *number {
+                        carttotal_products += productdetails.price;
+                    }
+                    
                 }
                 else {
                     if self.all_services.contains(item) {
@@ -3258,14 +3343,23 @@ mod geode_marketplace {
                         // add that to the cartservices vector
                         cartservices.push(unpaidservice);
 
+                        // add the price to the cart total for services IF there is enough invetory
+                        if servicedetails.inventory >= *number {
+                            carttotal_services += servicedetails.price;
+                        }
+
                     }
                 }
             }
+
+            // the cart total is the total of all items in the cart for which there
+            // is sufficient inventory to fulfil the order if you order right now
+            let carttotal: Balance = carttotal_products + carttotal_services;
             
             // package the results
             let my_cart = ViewUnpaidCart {
                 buyer: caller,
-                cart_total: current_cart.cart_total,
+                cart_total: carttotal,
                 total_items: current_cart.total_items,
                 cart_products: cartproducts,
                 cart_services: cartservices

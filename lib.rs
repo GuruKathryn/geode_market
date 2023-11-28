@@ -1144,7 +1144,7 @@ mod geode_marketplace {
             let totalitems: u128 = cart.cart_items.len().try_into().unwrap();
             // iterate through the cart items to get the total price of the cart
             let mut carttotal: Balance = 0;
-            for (item, _number) in &cart.cart_items {
+            for (item, number) in &cart.cart_items {
                 // get the price for that item
                 let mut item_price: Balance = 0;
                 if self.product_details.contains(&item) {
@@ -1156,7 +1156,7 @@ mod geode_marketplace {
                     }
                 }
                 // add the price to the total price
-                carttotal += item_price;
+                carttotal += item_price * number;
             }
 
             // perpare the updated UnpaidCart
@@ -1341,7 +1341,7 @@ mod geode_marketplace {
             let totalitems: u128 = cart.cart_items.len().try_into().unwrap();
             // iterate through the cart items to get the total price of the cart
             let mut carttotal: Balance = 0;
-            for (item, _number) in &cart.cart_items {
+            for (item, number) in &cart.cart_items {
                 // get the price for that item
                 let mut item_price: Balance = 0;
                 if self.product_details.contains(&item) {
@@ -1353,7 +1353,7 @@ mod geode_marketplace {
                     }
                 }
                 // add the price to the total price
-                carttotal += item_price;
+                carttotal += item_price * number;
             }
  
             // perpare the updated UnpaidCart
@@ -1397,7 +1397,7 @@ mod geode_marketplace {
             let totalitems: u128 = cart.cart_items.len().try_into().unwrap();
             // iterate through the cart items to get the total price of the cart
             let mut carttotal: Balance = 0;
-            for (item, _number) in &cart.cart_items {
+            for (item, number) in &cart.cart_items {
                 // get the price for that item
                 let mut item_price: Balance = 0;
                 if self.product_details.contains(&item) {
@@ -1409,7 +1409,7 @@ mod geode_marketplace {
                     }
                 }
                 // add the price to the total price
-                carttotal += item_price;
+                carttotal += item_price * number;
             }
  
             // perpare the updated UnpaidCart
@@ -1463,7 +1463,7 @@ mod geode_marketplace {
                 // if the item has enough inventory, add it to the official cart items
                 if item_inventory >= *number {
                     // add this item to the total price
-                    carttotal += item_price;
+                    carttotal += item_price * *number;
                     // add this item and quantity to the final cart items vector
                     final_cart_items.push((*item, *number));
                 } 
@@ -3313,7 +3313,7 @@ mod geode_marketplace {
 
                     // add the price to the cart total for products IF there is enough inventory
                     if productdetails.inventory >= *number {
-                        carttotal_products += productdetails.price;
+                        carttotal_products += productdetails.price * *number;
                     }
                     
                 }
@@ -3345,7 +3345,7 @@ mod geode_marketplace {
 
                         // add the price to the cart total for services IF there is enough invetory
                         if servicedetails.inventory >= *number {
-                            carttotal_services += servicedetails.price;
+                            carttotal_services += servicedetails.price * *number;
                         }
 
                     }

@@ -1690,7 +1690,7 @@ mod geode_marketplace {
                     // update account_seller_orders: Mapping<AccountId, HashVector>
                     let mut seller_orders = self.account_seller_orders.get(&item_seller).unwrap_or_default();
                     seller_orders.hashvector.push(new_order_id);
-                    self.account_seller_orders.insert(&caller, &seller_orders);
+                    self.account_seller_orders.insert(&item_seller, &seller_orders);
 
                     // update account_profile_seller: Mapping<AccountId, SellerProfile>
                     let mut seller_profile = self.account_profile_seller.get(&item_seller).unwrap_or_default();
@@ -3423,7 +3423,7 @@ mod geode_marketplace {
             // get the seller's products from account_seller_products: Mapping<AccountId, HashVector>
             let product_ids = self.account_seller_products.get(&caller).unwrap_or_default();
             for id in product_ids.hashvector.iter() {
-                // get the product details struct and ad it to the store_products vector
+                // get the product details struct and add it to the store_products vector
                 let productdetails = self.product_details.get(id).unwrap_or_default();
                 store_products.push(productdetails);
             }

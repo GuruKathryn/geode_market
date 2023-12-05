@@ -80,7 +80,7 @@ mod geode_marketplace {
         seller_account: AccountId,
         seller_name: Vec<u8>,
         description: Vec<u8>, 
-        reviews: Vec<Hash>,
+        reviews: Vec<ProductServiceReview>,
         inventory: u128, 
         photo_or_youtube_link1: Vec<u8>, 
         photo_or_youtube_link2: Vec<u8>,
@@ -108,7 +108,7 @@ mod geode_marketplace {
                 seller_account: ZERO_ADDRESS.into(),
                 seller_name: <Vec<u8>>::default(),
                 description: <Vec<u8>>::default(), 
-                reviews: <Vec<Hash>>::default(),
+                reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: u128::default(), 
                 photo_or_youtube_link1: <Vec<u8>>::default(), 
                 photo_or_youtube_link2: <Vec<u8>>::default(),
@@ -138,7 +138,7 @@ mod geode_marketplace {
         seller_account: AccountId,
         seller_name: Vec<u8>,
         description: Vec<u8>,
-        reviews: Vec<Hash>,
+        reviews: Vec<ProductServiceReview>,
         inventory: u128,
         photo_or_youtube_link1: Vec<u8>,
         photo_or_youtube_link2: Vec<u8>,
@@ -163,7 +163,7 @@ mod geode_marketplace {
                 seller_account: ZERO_ADDRESS.into(),
                 seller_name: <Vec<u8>>::default(),
                 description: <Vec<u8>>::default(),
-                reviews: <Vec<Hash>>::default(),
+                reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: u128::default(),
                 photo_or_youtube_link1: <Vec<u8>>::default(),
                 photo_or_youtube_link2: <Vec<u8>>::default(),
@@ -472,8 +472,8 @@ mod geode_marketplace {
         buyer_name: Vec<u8>,
         buyer_location: Vec<u8>,
         member_since: u64,
-        reviews: Vec<Hash>,  
-        // reviews sellers have made about this buyer
+        reviews: Vec<BuyerSellerReview>,  
+        // reviews sellers have made about this buyer 
         total_carts: u128,
         total_orders: u128,
         total_delivered: u128,
@@ -491,7 +491,7 @@ mod geode_marketplace {
                 buyer_name: <Vec<u8>>::default(),
                 buyer_location: <Vec<u8>>::default(),
                 member_since: u64::default(),
-                reviews: <Vec<Hash>>::default(),
+                reviews: <Vec<BuyerSellerReview>>::default(),
                 total_carts: u128::default(),
                 total_orders: u128::default(),
                 total_delivered: u128::default(),
@@ -519,7 +519,7 @@ mod geode_marketplace {
         banner_url: Vec<u8>,
         youtube_url: Vec<u8>,
         external_link: Vec<u8>,
-        reviews: Vec<Hash>,  
+        reviews: Vec<BuyerSellerReview>,  
         // reviews buyers have made about this seller
         total_orders: u128,
         total_delivered: u128,
@@ -541,7 +541,7 @@ mod geode_marketplace {
                 banner_url: <Vec<u8>>::default(),
                 youtube_url: <Vec<u8>>::default(),
                 external_link: <Vec<u8>>::default(),
-                reviews: <Vec<Hash>>::default(),  
+                reviews: <Vec<BuyerSellerReview>>::default(),  
                 total_orders: u128::default(),
                 total_delivered: u128::default(),
                 total_damaged: u128::default(),
@@ -1639,7 +1639,7 @@ mod geode_marketplace {
                             self.account_owned_digital_items.insert(&caller, &owned);
                         }
                         // payout the seller for the digital product
-                        self.env().transfer(item_seller, item_order_total).expect("payout failed");
+                        // self.env().transfer(item_seller, item_order_total).expect("payout failed");
                         if self.env().transfer(item_seller, item_order_total).is_err() {
                             return Err(Error::PayoutFailed);
                         }
@@ -1648,7 +1648,7 @@ mod geode_marketplace {
                     // PAYOUT SERVICES
                     if item_is_service == true {
                         // payout the seller for the service
-                        self.env().transfer(item_seller, item_order_total).expect("payout failed");
+                        // self.env().transfer(item_seller, item_order_total).expect("payout failed");
                         if self.env().transfer(item_seller, item_order_total).is_err() {
                             return Err(Error::PayoutFailed);
                         }
@@ -1820,14 +1820,14 @@ mod geode_marketplace {
                         if self.product_details.contains(&item_id) {
                             // update product_details: Mapping<Hash, Product>
                             let mut details = self.product_details.get(&item_id).unwrap_or_default();
-                            details.reviews.push(new_review_id);
+                            details.reviews.push(review);
                             self.product_details.insert(&item_id, &details);
                         }
                         else {
                             if self.service_details.contains(&item_id) {
                                 // update service_details: Mapping<Hash, Service>
                                 let mut details = self.service_details.get(&item_id).unwrap_or_default();
-                                details.reviews.push(new_review_id);
+                                details.reviews.push(review);
                                 self.service_details.insert(&item_id, &details);
                             }
                             else {
@@ -1898,7 +1898,7 @@ mod geode_marketplace {
                         self.account_buyer_sellers_reviewed.insert(&caller, &reviewed);
                         // account_profile_seller: Mapping<AccountId, SellerProfile>
                         let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
-                        profile.reviews.push(new_review_id);
+                        profile.reviews.push(review);
                         self.account_profile_seller.insert(&seller, &profile);
                     }
                 }
@@ -2184,6 +2184,7 @@ mod geode_marketplace {
             // account_profile_buyer: Mapping<AccountId, BuyerProfile>
             let mut profile = self.account_profile_buyer.get(&caller).unwrap_or_default();
             // update specific aspects of the BuyerProfile
+            profile.buyer_account = caller;
             profile.buyer_name = name;
             profile.buyer_location = location;
             // update mappings
@@ -2310,6 +2311,7 @@ mod geode_marketplace {
             // account_profile_seller: Mapping<AccountId, SellerProfile>
             let mut profile = self.account_profile_seller.get(&caller).unwrap_or_default();
             // update specific aspects of the SellerProfile
+            profile.seller_account = caller;
             profile.seller_name = name;
             profile.seller_location = location;
             profile.store_description = description;
@@ -2382,7 +2384,7 @@ mod geode_marketplace {
                                 let length = zeno_buyers.len();
 
                                 // pay the seller 
-                                self.env().transfer(seller, seller_payout).expect("payout failed");
+                                // self.env().transfer(seller, seller_payout).expect("payout failed");
                                 if self.env().transfer(seller, seller_payout).is_err() {
                                     return Err(Error::PayoutFailed);
                                 }
@@ -2395,17 +2397,20 @@ mod geode_marketplace {
                                         let affiliate: AccountId = zeno_buyers[n];
                                         let m: u128 = n.try_into().unwrap();
                                         let payment: Balance = zeno_total / 2^(m + 1);
-                                        self.env().transfer(affiliate, payment).expect("payout failed");
+                                        // self.env().transfer(affiliate, payment).expect("payout failed");
                                         if self.env().transfer(affiliate, payment).is_err() {
                                             return Err(Error::PayoutFailed);
                                         }
                                         remainder -= payment;
                                     }
                                     // pay the seller any remainder from the zeno payouts
-                                    self.env().transfer(seller, remainder).expect("payout failed");
-                                    if self.env().transfer(seller, remainder).is_err() {
-                                        return Err(Error::PayoutFailed);
+                                    if remainder > 0 {
+                                        // self.env().transfer(seller, remainder).expect("payout failed");
+                                        if self.env().transfer(seller, remainder).is_err() {
+                                         return Err(Error::PayoutFailed);
+                                        }
                                     }
+                                    
                                 }
                                 
                             }
@@ -2449,7 +2454,7 @@ mod geode_marketplace {
                     // issue a refund to the buyer for this order
                     let buyer = details.buyer;
                     let refund: Balance = details.total_order_price;
-                    self.env().transfer(buyer, refund).expect("payout failed");
+                    // self.env().transfer(buyer, refund).expect("payout failed");
                     if self.env().transfer(buyer, refund).is_err() {
                         return Err(Error::PayoutFailed);
                     }
@@ -2505,7 +2510,7 @@ mod geode_marketplace {
                     // issue a refund to the buyer for this order
                     let buyer = details.buyer;
                     let refund: Balance = details.total_order_price - details.zeno_total;
-                    self.env().transfer(buyer, refund).expect("payout failed");
+                    // self.env().transfer(buyer, refund).expect("payout failed");
                     if self.env().transfer(buyer, refund).is_err() {
                         return Err(Error::PayoutFailed);
                     }
@@ -2717,7 +2722,7 @@ mod geode_marketplace {
                         self.account_seller_buyers_reviewed.insert(&caller, &reviewed);
                         // account_profile_buyer: Mapping<AccountId, BuyerProfile>
                         let mut profile = self.account_profile_buyer.get(&buyer).unwrap_or_default();
-                        profile.reviews.push(new_review_id);
+                        profile.reviews.push(review);
                         self.account_profile_buyer.insert(&buyer, &profile);
                     }
                 }
@@ -2801,6 +2806,12 @@ mod geode_marketplace {
             self.account_seller_products.insert(&caller, &seller_products);
             // product_details: Mapping<Hash, Product>
             self.product_details.insert(&new_product_id, &product);
+
+            // if this is the first product, set the member_since timestamp
+            if sellerprofile.member_since == u64::default() {
+                sellerprofile.member_since = now;
+            }
+            self.account_profile_seller.insert(&caller, &sellerprofile);
             
             Ok(())
         }
@@ -2934,6 +2945,12 @@ mod geode_marketplace {
             self.account_seller_services.insert(&caller, &seller_services);
             // service_details: Mapping<Hash, Service>
             self.service_details.insert(&new_service_id, &service);
+
+            // if this is the first service, set the member_since timestamp
+            if sellerprofile.member_since == u64::default() {
+                sellerprofile.member_since = now;
+            }
+            self.account_profile_seller.insert(&caller, &sellerprofile);
             
             Ok(())
         }

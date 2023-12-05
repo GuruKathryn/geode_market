@@ -2771,7 +2771,7 @@ mod geode_marketplace {
             let new_product_id: Hash = Hash::from(new_id_u8);
 
             // get the seller profile 
-            let sellerprofile = self.account_profile_seller.get(&caller).unwrap_or_default();
+            let mut sellerprofile = self.account_profile_seller.get(&caller).unwrap_or_default();
 
             // set up the product details
             let product = Product {
@@ -2782,9 +2782,9 @@ mod geode_marketplace {
                 brand: brand,
                 category: category,
                 seller_account: caller,
-                seller_name: sellerprofile.seller_name,
+                seller_name: sellerprofile.seller_name.clone(),
                 description: description, 
-                reviews: <Vec<Hash>>::default(),
+                reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory, 
                 photo_or_youtube_link1: photo_or_youtube_link1, 
                 photo_or_youtube_link2: photo_or_youtube_link2,
@@ -2913,7 +2913,7 @@ mod geode_marketplace {
             let new_service_id: Hash = Hash::from(new_id_u8);
 
             // get the seller profile 
-            let sellerprofile = self.account_profile_seller.get(&caller).unwrap_or_default();
+            let mut sellerprofile = self.account_profile_seller.get(&caller).unwrap_or_default();
 
             // set up the service details
             let service = Service {
@@ -2923,9 +2923,9 @@ mod geode_marketplace {
                 price: price,
                 category: category,
                 seller_account: caller,
-                seller_name: sellerprofile.seller_name,
+                seller_name: sellerprofile.seller_name.clone(),
                 description: description, 
-                reviews: <Vec<Hash>>::default(),
+                reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory,
                 photo_or_youtube_link1: photo_or_youtube_link1, 
                 photo_or_youtube_link2: photo_or_youtube_link2,

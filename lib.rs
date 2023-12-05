@@ -2353,6 +2353,8 @@ mod geode_marketplace {
                             if delivered == true {
                                 details.order_status = 2;
                                 details.time_delivered = self.env().block_timestamp();
+                                // update order_details: Mapping<Hash, Order> 
+                                self.order_details.insert(&order_id, &details);
 
                                 // update Buyer profile
                                 // account_profile_buyer: Mapping<AccountId, BuyerProfile>
@@ -2374,6 +2376,8 @@ mod geode_marketplace {
                             // seller can mark shipped but not delivered
                             if shipped == true {
                                 details.order_status = 1;
+                                // update order_details: Mapping<Hash, Order> 
+                                self.order_details.insert(&order_id, &details);
 
                                 // calculate payments to seller and zeno buyers
                                 let seller = details.seller;
@@ -2415,9 +2419,6 @@ mod geode_marketplace {
                                 
                             }
                         }
-                       
-                        // update order_details: Mapping<Hash, Order> 
-                        self.order_details.insert(&order_id, &details);
 
                     }
                     else {

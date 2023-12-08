@@ -1724,6 +1724,12 @@ mod geode_marketplace {
                 // set up the caller
                 let caller = Self::env().caller();
                 let now = self.env().block_timestamp();
+                // set up clones
+                let review_clone1 = review.clone();
+                let review_clone2 = review.clone();
+                let review_clone3 = review.clone();
+                let review_clone4 = review.clone();
+
                 // account_buyer_items_bought: Mapping<AccountId, HashVector>
                 let bought = self.account_buyer_items_bought.get(&caller).unwrap_or_default();
                 // account_buyer_items_reviewed: Mapping<AccountId, HashVector>
@@ -1741,7 +1747,7 @@ mod geode_marketplace {
                         let new_review_id: Hash = Hash::from(new_id_u8);
 
                         // make the ProductServiceReview structure
-                        let review = ProductServiceReview {
+                        let thisreview = ProductServiceReview {
                             review_id: new_review_id,
                             item_id: item_id,
                             reviewer: caller,
@@ -1753,7 +1759,7 @@ mod geode_marketplace {
                         // update mappings...
 
                         // item_review_details: Mapping<Hash, ProductServiceReview>
-                        self.item_review_details.insert(&new_review_id, &review);
+                        self.item_review_details.insert(&new_review_id, &thisreview);
                         // account_buyer_items_reviewed: Mapping<AccountId, HashVector>
                         reviewed.hashvector.push(item_id);
                         self.account_buyer_items_reviewed.insert(&caller, &reviewed);
@@ -1761,7 +1767,7 @@ mod geode_marketplace {
                         if self.product_details.contains(&item_id) {
                             // update product_details: Mapping<Hash, Product>
                             let mut details = self.product_details.get(&item_id).unwrap_or_default();
-                            details.reviews.push(review);
+                            details.reviews.push(review_clone1);
                             self.product_details.insert(&item_id, &details);
 
                             // add this review to the list of all reviews for this seller on their profile
@@ -1772,7 +1778,7 @@ mod geode_marketplace {
                             // account_profile_seller: Mapping<AccountId, SellerProfile>
                             let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                             // add this review to the vector of reviews for this seller
-                            profile.reviews.push(review);
+                            profile.reviews.push(review_clone2);
                             self.account_profile_seller.insert(&seller, &profile);
 
                         }
@@ -1780,7 +1786,7 @@ mod geode_marketplace {
                             if self.service_details.contains(&item_id) {
                                 // update service_details: Mapping<Hash, Service>
                                 let mut details = self.service_details.get(&item_id).unwrap_or_default();
-                                details.reviews.push(review);
+                                details.reviews.push(review_clone3);
                                 self.service_details.insert(&item_id, &details);
 
                                 // add this review to the list of all reviews for this seller on their profile
@@ -1791,7 +1797,7 @@ mod geode_marketplace {
                                 // account_profile_seller: Mapping<AccountId, SellerProfile>
                                 let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                                 // add this review to the vector of reviews for this seller
-                                profile.reviews.push(review);
+                                profile.reviews.push(review_clone4);
                                 self.account_profile_seller.insert(&seller, &profile);
 
                             }
@@ -1817,15 +1823,15 @@ mod geode_marketplace {
         // 9 🟢 Rate A Seller >> this function rendered defunct but not removed to preserve indexing for the front end 
         #[ink(message)]
         pub fn rate_a_seller (&mut self, 
-            seller: AccountId,
-            item_id: Hash,
-            rating: u8,
-            review: Vec<u8>
+            _seller: AccountId,
+            _item_id: Hash,
+            _rating: u8,
+            _review: Vec<u8>
         ) -> Result<(), Error> {
             // if the rating is between 1 and 5
             if rating > 0 && rating < 6 {
                 // set up the caller
-                let caller = Self::env().caller();
+                let _caller = Self::env().caller();
             }
             else {
                 return Err(Error::RatingOutOfBounds)

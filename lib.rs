@@ -1767,7 +1767,7 @@ mod geode_marketplace {
                             // add this review to the list of all reviews for this seller on their profile
                             // instead of seller ratings, just use the aggregate of all product and service ratings
                             // get the seller
-                            seller = details.seller_account;
+                            let seller = details.seller_account;
                             // get the seller profile
                             // account_profile_seller: Mapping<AccountId, SellerProfile>
                             let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
@@ -1786,7 +1786,7 @@ mod geode_marketplace {
                                 // add this review to the list of all reviews for this seller on their profile
                                 // instead of seller ratings, just use the aggregate of all product and service ratings
                                 // get the seller
-                                seller = details.seller_account;
+                                let seller = details.seller_account;
                                 // get the seller profile
                                 // account_profile_seller: Mapping<AccountId, SellerProfile>
                                 let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();

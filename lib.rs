@@ -1724,11 +1724,6 @@ mod geode_marketplace {
                 // set up the caller
                 let caller = Self::env().caller();
                 let now = self.env().block_timestamp();
-                // set up clones
-                let review_clone1 = review.clone();
-                let review_clone2 = review.clone();
-                let review_clone3 = review.clone();
-                let review_clone4 = review.clone();
 
                 // account_buyer_items_bought: Mapping<AccountId, HashVector>
                 let bought = self.account_buyer_items_bought.get(&caller).unwrap_or_default();
@@ -1756,6 +1751,11 @@ mod geode_marketplace {
                             timestamp: now,
                         };
 
+                        // set up clones
+                        let review_clone1 = thisreview.clone();
+                        let review_clone2 = thisreview.clone();
+                        let review_clone3 = thisreview.clone();
+                        
                         // update mappings...
 
                         // item_review_details: Mapping<Hash, ProductServiceReview>
@@ -1767,7 +1767,7 @@ mod geode_marketplace {
                         if self.product_details.contains(&item_id) {
                             // update product_details: Mapping<Hash, Product>
                             let mut details = self.product_details.get(&item_id).unwrap_or_default();
-                            details.reviews.push(review_clone1);
+                            details.reviews.push(thisreview);
                             self.product_details.insert(&item_id, &details);
 
                             // add this review to the list of all reviews for this seller on their profile
@@ -1778,7 +1778,7 @@ mod geode_marketplace {
                             // account_profile_seller: Mapping<AccountId, SellerProfile>
                             let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                             // add this review to the vector of reviews for this seller
-                            profile.reviews.push(review_clone2);
+                            profile.reviews.push(thisreview_clone1);
                             self.account_profile_seller.insert(&seller, &profile);
 
                         }
@@ -1786,7 +1786,7 @@ mod geode_marketplace {
                             if self.service_details.contains(&item_id) {
                                 // update service_details: Mapping<Hash, Service>
                                 let mut details = self.service_details.get(&item_id).unwrap_or_default();
-                                details.reviews.push(review_clone3);
+                                details.reviews.push(thisreview_clone2);
                                 self.service_details.insert(&item_id, &details);
 
                                 // add this review to the list of all reviews for this seller on their profile
@@ -1797,7 +1797,7 @@ mod geode_marketplace {
                                 // account_profile_seller: Mapping<AccountId, SellerProfile>
                                 let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                                 // add this review to the vector of reviews for this seller
-                                profile.reviews.push(review_clone4);
+                                profile.reviews.push(thisreview_clone3);
                                 self.account_profile_seller.insert(&seller, &profile);
 
                             }

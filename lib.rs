@@ -268,34 +268,6 @@ mod geode_marketplace {
             scale_info::TypeInfo, Debug, PartialEq, Eq
         )
     )]
-    pub struct PaidCart { 
-        cart_id: Hash,
-        buyer: AccountId,
-        cart_timestamp: u64,
-        //(updates to payment timestamp)
-        cart_total: Balance,
-        deliver_to_address: Vec<u8>,
-        deliver_to_account: AccountId,
-        orders: Vec<Order>, 
-        total_items: u128,
-        cart_items: Vec<Hash>
-    }
-
-    impl Default for PaidCart {
-        fn default() -> PaidCart {
-            PaidCart {
-                cart_id: Hash::default(),
-                buyer: ZERO_ADDRESS.into(),
-                cart_timestamp: u64::default(),
-                cart_total: Balance::default(),
-                deliver_to_address: <Vec<u8>>::default(),
-                deliver_to_account: ZERO_ADDRESS.into(),
-                orders: <Vec<Order>>::default(), 
-                total_items: 0,
-                cart_items: <Vec<Hash>>::default()
-            }
-        }
-    }
 
     #[derive(Clone, scale::Decode, scale::Encode)]
     #[cfg_attr(feature = "std",
@@ -519,8 +491,8 @@ mod geode_marketplace {
         banner_url: Vec<u8>,
         youtube_url: Vec<u8>,
         external_link: Vec<u8>,
-        reviews: Vec<BuyerSellerReview>,  
-        // reviews buyers have made about this seller
+        reviews: Vec<ProductServiceReview>,  
+        // reviews buyers have made about this seller's products
         total_orders: u128,
         total_delivered: u128,
         total_damaged: u128,
@@ -541,7 +513,7 @@ mod geode_marketplace {
                 banner_url: <Vec<u8>>::default(),
                 youtube_url: <Vec<u8>>::default(),
                 external_link: <Vec<u8>>::default(),
-                reviews: <Vec<BuyerSellerReview>>::default(),  
+                reviews: <Vec<ProductServiceReview>>::default(),  
                 total_orders: u128::default(),
                 total_delivered: u128::default(),
                 total_damaged: u128::default(),
@@ -727,16 +699,17 @@ mod geode_marketplace {
             scale_info::TypeInfo, Debug, PartialEq, Eq
         )
     )]
+
     pub struct ViewBuyerOrders {
         buyer: AccountId,
-        carts: Vec<PaidCart>
+        carts: Vec<Order>
     }
 
     impl Default for ViewBuyerOrders {
         fn default() -> ViewBuyerOrders {
             ViewBuyerOrders {
                 buyer: ZERO_ADDRESS.into(),
-                carts: <Vec<PaidCart>>::default()
+                carts: <Vec<Order>>::default()
             }
         }
     }
@@ -786,7 +759,8 @@ mod geode_marketplace {
         product_lists: Vec<ViewProductList>,
         service_lists: Vec<ViewServiceList>,
         bookmarked_stores: Vec<SellerProfile>,
-        digital_downloads: Vec<Download>
+        digital_downloads: Vec<Download>,
+        orders: Vec<Order>
     }
 
     impl Default for ViewBuyerAccount {
@@ -796,7 +770,8 @@ mod geode_marketplace {
                 product_lists: <Vec<ViewProductList>>::default(),
                 service_lists: <Vec<ViewServiceList>>::default(),
                 bookmarked_stores: <Vec<SellerProfile>>::default(),
-                digital_downloads: <Vec<Download>>::default()
+                digital_downloads: <Vec<Download>>::default(),
+                orders: <Vec<Order>>::default(),
             }
         }
     }
@@ -1036,16 +1011,13 @@ mod geode_marketplace {
         account_buyer_orders: Mapping<AccountId, HashVector>,
         account_buyer_items_bought: Mapping<AccountId, HashVector>,
         account_buyer_items_reviewed: Mapping<AccountId, HashVector>,
-        account_buyer_sellers_reviewed: Mapping<AccountId, AccountVector>,
         account_seller_buyers_reviewed: Mapping<AccountId, AccountVector>,
         account_owned_digital_items: Mapping<AccountId, HashVector>,
         account_seller_orders: Mapping<AccountId, HashVector>,
-        account_paid_carts: Mapping<AccountId, HashVector>,
         account_current_cart: Mapping<AccountId, UnpaidCart>,
         account_seller_products: Mapping<AccountId, HashVector>,
         account_seller_services: Mapping<AccountId, HashVector>,
         message_details: Mapping<Hash, MessageDetails>,
-        paid_cart_details: Mapping<Hash, PaidCart>,
         product_details: Mapping<Hash, Product>,
         service_details: Mapping<Hash, Service>,
         order_details: Mapping<Hash, Order>,
@@ -1082,16 +1054,13 @@ mod geode_marketplace {
                 account_buyer_orders: Mapping::default(),
                 account_buyer_items_bought: Mapping::default(),
                 account_buyer_items_reviewed: Mapping::default(),
-                account_buyer_sellers_reviewed: Mapping::default(),
                 account_seller_buyers_reviewed: Mapping::default(),
                 account_owned_digital_items: Mapping::default(),
                 account_seller_orders: Mapping::default(),
-                account_paid_carts: Mapping::default(),
                 account_current_cart: Mapping::default(),
                 account_seller_products: Mapping::default(),
                 account_seller_services: Mapping::default(),
                 message_details: Mapping::default(),
-                paid_cart_details: Mapping::default(),
                 product_details: Mapping::default(),
                 service_details: Mapping::default(),
                 order_details: Mapping::default(),
@@ -1735,27 +1704,6 @@ mod geode_marketplace {
                 }
 
                 // UPDATE CART RELATED STORAGE MAPPINGS...
-                
-                // update paid_cart_details: Mapping<Hash, PaidCart>
-                // create a PaidCart structure
-                let new_paid_cart = PaidCart {
-                    cart_id: new_cart_id,
-                    buyer: caller,
-                    cart_timestamp: rightnow,
-                    cart_total: carttotal,
-                    deliver_to_address: deliver_to_address,
-                    deliver_to_account: deliver_to_account,
-                    orders: all_cart_orders, 
-                    total_items: total_items_count,
-                    cart_items: all_cart_items
-                };
-                // update the mapping
-                self.paid_cart_details.insert(&new_cart_id, &new_paid_cart);
-
-                // update account_paid_carts: Mapping<AccountId, HashVector>
-                let mut my_carts = self.account_paid_carts.get(&caller).unwrap_or_default();
-                my_carts.hashvector.push(new_cart_id);
-                self.account_paid_carts.insert(&caller, &my_carts);
 
                 // update account_profile_buyer: Mapping<AccountId, BuyerProfile>
                 let mut buyer_profile = self.account_profile_buyer.get(&caller).unwrap_or_default();
@@ -1834,6 +1782,16 @@ mod geode_marketplace {
                                 return Err(Error::ItemDoesNotExist)
                             }
                         }
+
+                        // add this review to the list of all reviews for this seller on their profile
+                        // instead of seller ratings, just use the aggregate of all product and service ratings
+                        // get the seller profile
+                        // account_profile_seller: Mapping<AccountId, SellerProfile>
+                        let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
+                        // add this review to the vector of reviews for this seller
+                        profile.reviews.push(review);
+                        self.account_profile_seller.insert(&seller, &profile);
+
                     }
                 }
                 else {
@@ -1848,10 +1806,11 @@ mod geode_marketplace {
         }
         
 
-        // 9 🟢 Rate A Seller
+        // 9 🟢 Rate A Seller >> this function rendered defunct but not removed to preserve indexing for the front end 
         #[ink(message)]
         pub fn rate_a_seller (&mut self, 
             seller: AccountId,
+            item_id: Hash,
             rating: u8,
             review: Vec<u8>
         ) -> Result<(), Error> {
@@ -1859,53 +1818,6 @@ mod geode_marketplace {
             if rating > 0 && rating < 6 {
                 // set up the caller
                 let caller = Self::env().caller();
-                let now = self.env().block_timestamp();
-                let review_clone = review.clone();
-
-                // buyer_store_history: Mapping<AccountId, AccountVector>
-                let sellers = self.buyer_store_history.get(&caller).unwrap_or_default();
-                // account_buyer_sellers_reviewed: Mapping<AccountId, HashVector>
-                let mut reviewed = self.account_buyer_sellers_reviewed.get(&caller).unwrap_or_default();
-
-                // did you actually buy something from this seller?
-                if sellers.accountvector.contains(&seller) {
-                    // have you already reviewed this seller?
-                    if reviewed.accountvector.contains(&seller) {
-                        return Err(Error::NotEligibleToReview)
-                    }
-                    else {
-                        // make the review_id hash
-                        let encodable = (caller, seller, review); // Implements `scale::Encode`
-                        let mut new_id_u8 = <Sha2x256 as HashOutput>::Type::default(); // 256-bit buffer
-                        ink::env::hash_encoded::<Sha2x256, _>(&encodable, &mut new_id_u8);
-                        let new_review_id: Hash = Hash::from(new_id_u8);
-
-                        // make the BuyerSellerReview structure
-                        let review = BuyerSellerReview {
-                            review_id: new_review_id,
-                            account_id: seller,
-                            reviewer: caller,
-                            rating: rating,
-                            review: review_clone,
-                            timestamp: now,
-                        };
-
-                        // update mappings...
-                        // account_review_details: Mapping<Hash, BuyerSellerReview>
-                        self.account_review_details.insert(&new_review_id, &review);
-                        // account_buyer_sellers_reviewed: Mapping<AccountId, AccountVector>
-                        reviewed.accountvector.push(seller);
-                        self.account_buyer_sellers_reviewed.insert(&caller, &reviewed);
-                        // account_profile_seller: Mapping<AccountId, SellerProfile>
-                        let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
-                        profile.reviews.push(review);
-                        self.account_profile_seller.insert(&seller, &profile);
-                    }
-                }
-                else {
-                    // if you did not buy from this seller, error
-                    return Err(Error::NotEligibleToReview)
-                }
             }
             else {
                 return Err(Error::RatingOutOfBounds)
@@ -3156,20 +3068,22 @@ mod geode_marketplace {
             // set the caller
             let caller = Self::env().caller();
             // set up return structures
-            let mut my_carts = <Vec<PaidCart>>::default();
-            // get paid cart ids from account_paid_carts: Mapping<AccountId, HashVector>
-            let paid_cart_ids = self.account_paid_carts.get(&caller).unwrap_or_default();
-            // iterate over all cart ids to get the PaidCart structs
-            for cart in paid_cart_ids.hashvector.iter() {
-                // get the paid cart details from paid_cart_details: Mapping<Hash, PaidCart>
-                let cart_details = self.paid_cart_details.get(cart).unwrap_or_default();
-                // add the cart details to the vector of paid cart results
-                my_carts.push(cart_details);
+            let mut myorders = <Vec<Order>>::default();
+            
+            // get the buyer's completed Orders...
+            // get the vector of order ids from storage
+            let order_ids = self.account_buyer_orders.get(&caller).unwrap_or_default();
+            // get the details of each order and add them to the Vec<Order> myorders
+            for id in order_ids.hashvector.iter() {
+                // order_details: Mapping<Hash, Order>
+                let orderdetails = self.order_details.get(id).unwrap_or_default();
+                myorders.push(orderdetails);
             }
+
             // package the results
             let my_orders = ViewBuyerOrders {
                 buyer: caller,
-                carts: my_carts,
+                carts: myorders,
             };
 
             // return the results
@@ -3191,6 +3105,7 @@ mod geode_marketplace {
             let mut servicelists = <Vec<ViewServiceList>>::default();
             let mut bookmarkedstores = <Vec<SellerProfile>>::default();
             let mut downloads = <Vec<Download>>::default();
+            let mut myorders = <Vec<Order>>::default();
 
             // get product list ids from account_product_lists: Mapping<AccountId, HashVector>
             let product_list_ids = self.account_product_lists.get(&caller).unwrap_or_default();
@@ -3272,6 +3187,16 @@ mod geode_marketplace {
                 downloads.push(download_item);
             }
 
+            // get the buyer's completed Orders...
+            // get the vector of order ids from storage
+            let order_ids = self.account_buyer_orders.get(&caller).unwrap_or_default();
+            // get the details of each order and add them to the Vec<Order> myorders
+            for id in order_ids.hashvector.iter() {
+                // order_details: Mapping<Hash, Order>
+                let orderdetails = self.order_details.get(id).unwrap_or_default();
+                myorders.push(orderdetails);
+            }
+
             // package the results
             let my_account = ViewBuyerAccount {
                 buyer: buyerprofile,
@@ -3279,6 +3204,7 @@ mod geode_marketplace {
                 service_lists: servicelists,
                 bookmarked_stores: bookmarkedstores,
                 digital_downloads: downloads,
+                orders: myorders,
             };
 
             // return the results

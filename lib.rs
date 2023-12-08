@@ -268,13 +268,6 @@ mod geode_marketplace {
             scale_info::TypeInfo, Debug, PartialEq, Eq
         )
     )]
-
-    #[derive(Clone, scale::Decode, scale::Encode)]
-    #[cfg_attr(feature = "std",
-        derive(ink::storage::traits::StorageLayout, 
-            scale_info::TypeInfo, Debug, PartialEq, Eq
-        )
-    )]
     pub struct UnpaidCart { 
         buyer: AccountId,
         cart_total: Balance,
@@ -1770,6 +1763,18 @@ mod geode_marketplace {
                             let mut details = self.product_details.get(&item_id).unwrap_or_default();
                             details.reviews.push(review);
                             self.product_details.insert(&item_id, &details);
+
+                            // add this review to the list of all reviews for this seller on their profile
+                            // instead of seller ratings, just use the aggregate of all product and service ratings
+                            // get the seller
+                            seller = details.seller_account;
+                            // get the seller profile
+                            // account_profile_seller: Mapping<AccountId, SellerProfile>
+                            let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
+                            // add this review to the vector of reviews for this seller
+                            profile.reviews.push(review);
+                            self.account_profile_seller.insert(&seller, &profile);
+
                         }
                         else {
                             if self.service_details.contains(&item_id) {
@@ -1777,20 +1782,23 @@ mod geode_marketplace {
                                 let mut details = self.service_details.get(&item_id).unwrap_or_default();
                                 details.reviews.push(review);
                                 self.service_details.insert(&item_id, &details);
+
+                                // add this review to the list of all reviews for this seller on their profile
+                                // instead of seller ratings, just use the aggregate of all product and service ratings
+                                // get the seller
+                                seller = details.seller_account;
+                                // get the seller profile
+                                // account_profile_seller: Mapping<AccountId, SellerProfile>
+                                let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
+                                // add this review to the vector of reviews for this seller
+                                profile.reviews.push(review);
+                                self.account_profile_seller.insert(&seller, &profile);
+
                             }
                             else {
                                 return Err(Error::ItemDoesNotExist)
                             }
                         }
-
-                        // add this review to the list of all reviews for this seller on their profile
-                        // instead of seller ratings, just use the aggregate of all product and service ratings
-                        // get the seller profile
-                        // account_profile_seller: Mapping<AccountId, SellerProfile>
-                        let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
-                        // add this review to the vector of reviews for this seller
-                        profile.reviews.push(review);
-                        self.account_profile_seller.insert(&seller, &profile);
 
                     }
                 }

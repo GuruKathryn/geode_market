@@ -1778,7 +1778,7 @@ mod geode_marketplace {
                             // account_profile_seller: Mapping<AccountId, SellerProfile>
                             let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                             // add this review to the vector of reviews for this seller
-                            profile.reviews.push(thisreview_clone1);
+                            profile.reviews.push(review_clone1);
                             self.account_profile_seller.insert(&seller, &profile);
 
                         }
@@ -1786,7 +1786,7 @@ mod geode_marketplace {
                             if self.service_details.contains(&item_id) {
                                 // update service_details: Mapping<Hash, Service>
                                 let mut details = self.service_details.get(&item_id).unwrap_or_default();
-                                details.reviews.push(thisreview_clone2);
+                                details.reviews.push(review_clone2);
                                 self.service_details.insert(&item_id, &details);
 
                                 // add this review to the list of all reviews for this seller on their profile
@@ -1797,7 +1797,7 @@ mod geode_marketplace {
                                 // account_profile_seller: Mapping<AccountId, SellerProfile>
                                 let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                                 // add this review to the vector of reviews for this seller
-                                profile.reviews.push(thisreview_clone3);
+                                profile.reviews.push(review_clone3);
                                 self.account_profile_seller.insert(&seller, &profile);
 
                             }
@@ -1825,7 +1825,7 @@ mod geode_marketplace {
         pub fn rate_a_seller (&mut self, 
             _seller: AccountId,
             _item_id: Hash,
-            _rating: u8,
+            rating: u8,
             _review: Vec<u8>
         ) -> Result<(), Error> {
             // if the rating is between 1 and 5

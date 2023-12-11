@@ -3052,8 +3052,6 @@ mod geode_marketplace {
 
             // set up return structures
             let mut store_results = <Vec<ViewStore>>::default();
-            let mut store_products = <Vec<Product>>::default();
-            let mut store_services = <Vec<Service>>::default();
 
             // iterate over all_sellers: Vec<AccountId> to find matching results
             for acct in self.all_sellers.iter() {
@@ -3069,6 +3067,9 @@ mod geode_marketplace {
                 // if the target_string is in the details
                 if name_string.contains(&target_string) || description_string.contains(&target_string) ||
                 location_string.contains(&target_string) {
+
+                    let mut store_products = <Vec<Product>>::default();
+                    let mut store_services = <Vec<Service>>::default();
                     
                     // get the seller's products from account_seller_products: Mapping<AccountId, HashVector>
                     let product_ids = self.account_seller_products.get(&acct).unwrap_or_default();

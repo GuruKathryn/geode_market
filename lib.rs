@@ -674,14 +674,14 @@ mod geode_marketplace {
     )]
     pub struct StoreSearchResults {
         search: Vec<u8>,
-        stores: Vec<SellerProfile>
+        stores: Vec<ViewStore>
     }
 
     impl Default for StoreSearchResults {
         fn default() -> StoreSearchResults {
             StoreSearchResults {
                 search: <Vec<u8>>::default(),
-                stores: <Vec<SellerProfile>>::default()
+                stores: <Vec<ViewStore>>::default()
             }
         }
     }
@@ -1639,14 +1639,6 @@ mod geode_marketplace {
                     else {
                         store_history.accountvector.push(item_seller);
                         self.buyer_store_history.insert(&caller, &store_history);
-                    }
-
-                    // update all_sellers: Vec<AccountId>
-                    if self.all_sellers.contains(&item_seller) {
-                        // do nothing
-                    }
-                    else {
-                        self.all_sellers.push(item_seller);
                     }
 
                     // update account_seller_orders: Mapping<AccountId, HashVector>
@@ -2739,6 +2731,14 @@ mod geode_marketplace {
                 sellerprofile.member_since = now;
             }
             self.account_profile_seller.insert(&caller, &sellerprofile);
+
+            // update all_sellers: Vec<AccountId>
+            if self.all_sellers.contains(&caller) {
+                // do nothing
+            }
+            else {
+                self.all_sellers.push(caller);
+            }
             
             Ok(())
         }
@@ -2878,6 +2878,14 @@ mod geode_marketplace {
                 sellerprofile.member_since = now;
             }
             self.account_profile_seller.insert(&caller, &sellerprofile);
+
+            // update all_sellers: Vec<AccountId>
+            if self.all_sellers.contains(&caller) {
+                // do nothing
+            }
+            else {
+                self.all_sellers.push(caller);
+            }
             
             Ok(())
         }
@@ -3043,7 +3051,9 @@ mod geode_marketplace {
         ) -> StoreSearchResults {
 
             // set up return structures
-            let mut store_results = <Vec<SellerProfile>>::default();
+            let mut store_results = <Vec<ViewStore>>::default();
+            let mut store_products = <Vec<Product>>::default();
+            let mut store_services = <Vec<Service>>::default();
 
             // iterate over all_sellers: Vec<AccountId> to find matching results
             for acct in self.all_sellers.iter() {
@@ -3059,8 +3069,33 @@ mod geode_marketplace {
                 // if the target_string is in the details
                 if name_string.contains(&target_string) || description_string.contains(&target_string) ||
                 location_string.contains(&target_string) {
+                    
+                    // get the seller's products from account_seller_products: Mapping<AccountId, HashVector>
+                    let product_ids = self.account_seller_products.get(&acct).unwrap_or_default();
+                    for id in product_ids.hashvector.iter() {
+                        // get the product details struct and add it to the store_products vector
+                        let productdetails = self.product_details.get(id).unwrap_or_default();
+                        store_products.push(productdetails);
+                    }
+
+                    // get the seller's services from account_seller_services: Mapping<AccountId, HashVector> 
+                    let service_ids = self.account_seller_services.get(&acct).unwrap_or_default();
+                    for id in service_ids.hashvector.iter() {
+                        // get the service details struct and add it to the store_service vector
+                        let servicedetails = self.service_details.get(id).unwrap_or_default();
+                        store_services.push(servicedetails);
+                    }
+
+                    // package the store information
+                    let store = ViewStore {
+                        owner: details,
+                        products: store_products,
+                        services: store_services
+                    };
+                    
                     // add it to the results vector
-                    store_results.push(details);
+                    store_results.push(store);
+
                 }
                 //continue iterating
             }

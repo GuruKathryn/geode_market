@@ -1787,7 +1787,7 @@ mod geode_marketplace {
                             // recalculate the review count
                             details.review_count = details.reviews.len().try_into().unwrap();
                             // recalcualte the review average
-                            let mut sum = u8::default();
+                            let mut sum = u64::default();
                             for item in details.reviews.iter() {
                                 sum += item.rating;
                             }
@@ -1807,7 +1807,7 @@ mod geode_marketplace {
                             // recalculate the review count
                             profile.review_count = profile.reviews.len().try_into().unwrap();
                             // recalcualte the review average
-                            let mut sum = u8::default();
+                            let mut sum = u64::default();
                             for item in profile.reviews.iter() {
                                 sum += item.rating;
                             }
@@ -1824,7 +1824,7 @@ mod geode_marketplace {
                                 // recalculate the review count
                                 details.review_count = details.reviews.len().try_into().unwrap();
                                 // recalcualte the review average
-                                let mut sum = u8::default();
+                                let mut sum = u64::default();
                                 for item in details.reviews.iter() {
                                     sum += item.rating;
                                 }
@@ -1844,7 +1844,7 @@ mod geode_marketplace {
                                 // recalculate the review count
                                 profile.review_count = profile.reviews.len().try_into().unwrap();
                                 // recalcualte the review average
-                                let mut sum = u8::default();
+                                let mut sum = u64::default();
                                 for item in profile.reviews.iter() {
                                     sum += item.rating;
                                 }
@@ -2705,7 +2705,7 @@ mod geode_marketplace {
                         // recalculate the review count
                         profile.review_count = profile.reviews.len().try_into().unwrap();
                         // recalcualte the review average
-                        let mut sum = u8::default();
+                        let mut sum = u64::default();
                         for item in profile.reviews.iter() {
                             sum += item.rating;
                         }
@@ -2772,7 +2772,7 @@ mod geode_marketplace {
                 seller_account: caller,
                 seller_name: sellerprofile.seller_name.clone(),
                 description: description, 
-                review_average: u8::deafult(),
+                review_average: u8::default(),
                 review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory, 

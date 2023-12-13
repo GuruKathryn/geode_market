@@ -1732,7 +1732,7 @@ mod geode_marketplace {
         #[ink(message)]
         pub fn rate_a_product_or_service (&mut self, 
             item_id: Hash,
-            rating: u8,
+            rating: u64,
             review: Vec<u8>
         ) -> Result<(), Error> {
             // if the rating is between 1 and 5
@@ -1877,7 +1877,7 @@ mod geode_marketplace {
         pub fn rate_a_seller (&mut self, 
             _seller: AccountId,
             _item_id: Hash,
-            rating: u8,
+            rating: u64,
             _review: Vec<u8>
         ) -> Result<(), Error> {
             // if the rating is between 1 and 5
@@ -2656,7 +2656,7 @@ mod geode_marketplace {
         #[ink(message)]
         pub fn rate_a_buyer (&mut self, 
             buyer: AccountId,
-            rating: u8,
+            rating: u64,
             review: Vec<u8>
         ) -> Result<(), Error> {
             // if the rating is between 1 and 5
@@ -2772,7 +2772,7 @@ mod geode_marketplace {
                 seller_account: caller,
                 seller_name: sellerprofile.seller_name.clone(),
                 description: description, 
-                review_average: u8::default(),
+                review_average: u64::default(),
                 review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory, 
@@ -2925,7 +2925,7 @@ mod geode_marketplace {
                 seller_account: caller,
                 seller_name: sellerprofile.seller_name.clone(),
                 description: description,
-                review_average: u8::default(),
+                review_average: u64::default(),
                 review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory,

@@ -79,7 +79,9 @@ mod geode_marketplace {
         category: Vec<u8>,
         seller_account: AccountId,
         seller_name: Vec<u8>,
-        description: Vec<u8>, 
+        description: Vec<u8>,
+        review_average: u8,
+        review_count: u64,
         reviews: Vec<ProductServiceReview>,
         inventory: u128, 
         photo_or_youtube_link1: Vec<u8>, 
@@ -107,7 +109,9 @@ mod geode_marketplace {
                 category: <Vec<u8>>::default(),
                 seller_account: ZERO_ADDRESS.into(),
                 seller_name: <Vec<u8>>::default(),
-                description: <Vec<u8>>::default(), 
+                description: <Vec<u8>>::default(),
+                review_average: u8::default(),
+                review_count: u64::default(), 
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: u128::default(), 
                 photo_or_youtube_link1: <Vec<u8>>::default(), 
@@ -138,6 +142,8 @@ mod geode_marketplace {
         seller_account: AccountId,
         seller_name: Vec<u8>,
         description: Vec<u8>,
+        review_average: u8,
+        review_count: u64,
         reviews: Vec<ProductServiceReview>,
         inventory: u128,
         photo_or_youtube_link1: Vec<u8>,
@@ -163,6 +169,8 @@ mod geode_marketplace {
                 seller_account: ZERO_ADDRESS.into(),
                 seller_name: <Vec<u8>>::default(),
                 description: <Vec<u8>>::default(),
+                review_average: u8::default(),
+                review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: u128::default(),
                 photo_or_youtube_link1: <Vec<u8>>::default(),
@@ -297,6 +305,8 @@ mod geode_marketplace {
         cart_id: Hash,
         order_timestamp: u64,
         buyer: AccountId,
+        buyer_rating: u8,
+        buyer_rating_count: u64,
         seller: AccountId,
         seller_name: Vec<u8>,
         image: Vec<u8>,
@@ -327,6 +337,8 @@ mod geode_marketplace {
                 cart_id: Hash::default(),
                 order_timestamp: u64::default(),
                 buyer: ZERO_ADDRESS.into(),
+                buyer_rating: u8::default(),
+                buyer_rating_count: u64::default(),
                 seller: ZERO_ADDRESS.into(),
                 seller_name: <Vec<u8>>::default(),
                 image: <Vec<u8>>::default(),
@@ -437,6 +449,8 @@ mod geode_marketplace {
         buyer_name: Vec<u8>,
         buyer_location: Vec<u8>,
         member_since: u64,
+        review_average: u8,
+        review_count: u64,
         reviews: Vec<BuyerSellerReview>,  
         // reviews sellers have made about this buyer 
         total_carts: u128,
@@ -456,6 +470,8 @@ mod geode_marketplace {
                 buyer_name: <Vec<u8>>::default(),
                 buyer_location: <Vec<u8>>::default(),
                 member_since: u64::default(),
+                review_average: u8::default(),
+                review_count: u64::default(),
                 reviews: <Vec<BuyerSellerReview>>::default(),
                 total_carts: u128::default(),
                 total_orders: u128::default(),
@@ -484,6 +500,8 @@ mod geode_marketplace {
         banner_url: Vec<u8>,
         youtube_url: Vec<u8>,
         external_link: Vec<u8>,
+        review_average: u8,
+        review_count: u64,
         reviews: Vec<ProductServiceReview>,  
         // reviews buyers have made about this seller's products
         total_orders: u128,
@@ -506,6 +524,8 @@ mod geode_marketplace {
                 banner_url: <Vec<u8>>::default(),
                 youtube_url: <Vec<u8>>::default(),
                 external_link: <Vec<u8>>::default(),
+                review_average: u8::default(),
+                review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),  
                 total_orders: u128::default(),
                 total_delivered: u128::default(),
@@ -1550,12 +1570,17 @@ mod geode_marketplace {
                         status = 2;
                     }
 
+                    // get the buyer profile
+                    let mut buyer_profile = self.account_profile_buyer.get(&caller).unwrap_or_default();
+
                     // set up the Order structure
                     let new_order = Order {
                         order_id: new_order_id,
                         cart_id: new_cart_id,
                         order_timestamp: rightnow,
                         buyer: caller,
+                        buyer_rating: buyer_profile.review_average,
+                        buyer_rating_count: buyer_profile.review_count,
                         seller: item_seller,
                         seller_name: item_seller_name,
                         image: item_image,
@@ -1656,7 +1681,6 @@ mod geode_marketplace {
                     self.account_profile_seller.insert(&item_seller, &seller_profile);
 
                     // update account_profile_buyer: Mapping<AccountId, BuyerProfile>
-                    let mut buyer_profile = self.account_profile_buyer.get(&caller).unwrap_or_default();
                     // increment total_orders
                     buyer_profile.total_orders += 1;
                     if item_is_digital == true || item_is_service == true {
@@ -1760,6 +1784,15 @@ mod geode_marketplace {
                             // update product_details: Mapping<Hash, Product>
                             let mut details = self.product_details.get(&item_id).unwrap_or_default();
                             details.reviews.push(thisreview);
+                            // recalculate the review count
+                            details.review_count = details.reviews.len().try_into().unwrap();
+                            // recalcualte the review average
+                            let mut sum = u8::default();
+                            for item in details.reviews.iter() {
+                                sum += item.rating;
+                            }
+                            details.review_average = sum / details.review_count;
+                            // return to storage
                             self.product_details.insert(&item_id, &details);
 
                             // add this review to the list of all reviews for this seller on their profile
@@ -1771,6 +1804,15 @@ mod geode_marketplace {
                             let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                             // add this review to the vector of reviews for this seller
                             profile.reviews.push(review_clone1);
+                            // recalculate the review count
+                            profile.review_count = profile.reviews.len().try_into().unwrap();
+                            // recalcualte the review average
+                            let mut sum = u8::default();
+                            for item in profile.reviews.iter() {
+                                sum += item.rating;
+                            }
+                            profile.review_average = sum / profile.review_count;
+                            // return to storage
                             self.account_profile_seller.insert(&seller, &profile);
 
                         }
@@ -1779,6 +1821,15 @@ mod geode_marketplace {
                                 // update service_details: Mapping<Hash, Service>
                                 let mut details = self.service_details.get(&item_id).unwrap_or_default();
                                 details.reviews.push(review_clone2);
+                                // recalculate the review count
+                                details.review_count = details.reviews.len().try_into().unwrap();
+                                // recalcualte the review average
+                                let mut sum = u8::default();
+                                for item in details.reviews.iter() {
+                                    sum += item.rating;
+                                }
+                                details.review_average = sum / details.review_count;
+                                // return to storage
                                 self.service_details.insert(&item_id, &details);
 
                                 // add this review to the list of all reviews for this seller on their profile
@@ -1790,6 +1841,15 @@ mod geode_marketplace {
                                 let mut profile = self.account_profile_seller.get(&seller).unwrap_or_default();
                                 // add this review to the vector of reviews for this seller
                                 profile.reviews.push(review_clone3);
+                                // recalculate the review count
+                                profile.review_count = profile.reviews.len().try_into().unwrap();
+                                // recalcualte the review average
+                                let mut sum = u8::default();
+                                for item in profile.reviews.iter() {
+                                    sum += item.rating;
+                                }
+                                profile.review_average = sum / profile.review_count;
+                                // return to storage
                                 self.account_profile_seller.insert(&seller, &profile);
 
                             }
@@ -2642,6 +2702,15 @@ mod geode_marketplace {
                         // account_profile_buyer: Mapping<AccountId, BuyerProfile>
                         let mut profile = self.account_profile_buyer.get(&buyer).unwrap_or_default();
                         profile.reviews.push(review);
+                        // recalculate the review count
+                        profile.review_count = profile.reviews.len().try_into().unwrap();
+                        // recalcualte the review average
+                        let mut sum = u8::default();
+                        for item in profile.reviews.iter() {
+                            sum += item.rating;
+                        }
+                        profile.review_average = sum / profile.review_count;
+                        // return to storage
                         self.account_profile_buyer.insert(&buyer, &profile);
                     }
                 }
@@ -2703,6 +2772,8 @@ mod geode_marketplace {
                 seller_account: caller,
                 seller_name: sellerprofile.seller_name.clone(),
                 description: description, 
+                review_average: u8::deafult(),
+                review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory, 
                 photo_or_youtube_link1: photo_or_youtube_link1, 
@@ -2783,7 +2854,9 @@ mod geode_marketplace {
                     category: category,
                     seller_account: caller,
                     seller_name: details.seller_name,
-                    description: description, 
+                    description: description,
+                    review_average: details.review_average,
+                    review_count: details.review_count, 
                     reviews: details.reviews,
                     inventory: inventory, 
                     photo_or_youtube_link1: photo_or_youtube_link1, 
@@ -2851,7 +2924,9 @@ mod geode_marketplace {
                 category: category,
                 seller_account: caller,
                 seller_name: sellerprofile.seller_name.clone(),
-                description: description, 
+                description: description,
+                review_average: u8::default(),
+                review_count: u64::default(),
                 reviews: <Vec<ProductServiceReview>>::default(),
                 inventory: inventory,
                 photo_or_youtube_link1: photo_or_youtube_link1, 
@@ -2926,7 +3001,9 @@ mod geode_marketplace {
                     category: category,
                     seller_account: caller,
                     seller_name: details.seller_name,
-                    description: description, 
+                    description: description,
+                    review_average: details.review_average,
+                    review_count: details.review_count,
                     reviews: details.reviews,
                     inventory: inventory,
                     photo_or_youtube_link1: photo_or_youtube_link1, 

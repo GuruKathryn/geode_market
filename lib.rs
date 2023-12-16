@@ -3703,116 +3703,11 @@ mod geode_marketplace {
         }
 
 
-        // 40 🟢 Find Products And Services By Zeno Incentive
-        // returns products and services by keyword with zeno_percent > 0 AND < 20 zeno buyers
-        #[ink(message)]
-        pub fn search_by_zeno (&self, keywords: Vec<u8>) -> ViewZeno {
-            // set up return structures
-            let mut store_products = <Vec<PublicProduct>>::default();
-            let mut store_services = <Vec<Service>>::default();
-
-            // get the set of all products from all_products: Vec<Hash>
-            let product_ids = &self.all_products;
-            for id in product_ids.iter() {
-                // get the product details struct 
-                let details = self.product_details.get(id).unwrap_or_default();
-                // check to see if the keywords are there
-                let title_string = String::from_utf8(details.title.clone()).unwrap_or_default();
-                let seller_string = String::from_utf8(details.seller_name.clone()).unwrap_or_default();
-                let brand_string = String::from_utf8(details.brand.clone()).unwrap_or_default();
-                let category_string = String::from_utf8(details.category.clone()).unwrap_or_default();
-                let description_string = String::from_utf8(details.description.clone()).unwrap_or_default();
-                let delivery_string = String::from_utf8(details.delivery_info.clone()).unwrap_or_default();
-                let location_string = String::from_utf8(details.product_location.clone()).unwrap_or_default();
-
-                let targetvecu8 = keywords.clone();
-                let target_string = String::from_utf8(targetvecu8).unwrap_or_default();
-
-                // if the target_string is in the details
-                if title_string.contains(&target_string) || brand_string.contains(&target_string) ||
-                category_string.contains(&target_string) || description_string.contains(&target_string) ||
-                delivery_string.contains(&target_string) || location_string.contains(&target_string) ||
-                seller_string.contains(&target_string) {
-
-                    // then check for zeno_percent > 0 AND zeno_buyers < 20
-                    let count: u128 = details.zeno_buyers.len().try_into().unwrap();
-                    if details.zeno_percent > 0 && count < 20 {
-                        // make the public product structure
-                        let public_product = PublicProduct {
-                            product_id: details.product_id,
-                            digital: details.digital,
-                            title: details.title,
-                            price: details.price,
-                            brand: details.brand,
-                            category: details.category,
-                            seller_account: details.seller_account,
-                            seller_name: details.seller_name,
-                            description: details.description,
-                            review_average: details.review_average,
-                            review_count: details.review_count,
-                            reviews: details.reviews,
-                            inventory: details.inventory, 
-                            photo_or_youtube_link1: details.photo_or_youtube_link1, 
-                            photo_or_youtube_link2: details.photo_or_youtube_link2,
-                            photo_or_youtube_link3: details.photo_or_youtube_link3,
-                            more_info_link: details.more_info_link,
-                            delivery_info: details.delivery_info,
-                            product_location: details.product_location,
-                            zeno_percent: details.zeno_percent,
-                            zeno_buyers: details.zeno_buyers
-                        };
-                        // add it to the store_products vector
-                        store_products.push(public_product);
-                    }
-                }
-            }
-
-            // get the set of all services from all_services: Vec<Hash> 
-            let service_ids = &self.all_services;
-            for id in service_ids.iter() {
-                // get the service details struct 
-                let servicedetails = self.service_details.get(id).unwrap_or_default();
-
-                // check to see if the keywords are there
-                let title_string = String::from_utf8(servicedetails.title.clone()).unwrap_or_default();
-                let seller_string = String::from_utf8(servicedetails.seller_name.clone()).unwrap_or_default();
-                let category_string = String::from_utf8(servicedetails.category.clone()).unwrap_or_default();
-                let description_string = String::from_utf8(servicedetails.description.clone()).unwrap_or_default();
-                let location_string = String::from_utf8(servicedetails.service_location.clone()).unwrap_or_default();
-
-                let targetvec = keywords.clone();
-                let target_string = String::from_utf8(targetvec).unwrap_or_default();
-
-                // if the target_string is in the details
-                if title_string.contains(&target_string) || seller_string.contains(&target_string) ||
-                category_string.contains(&target_string) || description_string.contains(&target_string) ||
-                location_string.contains(&target_string) {
-
-                    // check for zeno_percent > 0 AND zeno_buyers < 20
-                    let count: u128 = servicedetails.zeno_buyers.len().try_into().unwrap();
-                    if servicedetails.zeno_percent > 0 && count < 20 {
-                        // add it to the store_services vector
-                        store_services.push(servicedetails);
-                    }
-                }
-            }
-
-            // package the results
-            let view_zeno = ViewZeno {
-                products: store_products,
-                services: store_services
-            };
-
-            // return the results
-            view_zeno
-        }
-
-
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // >>>>>>>>>>>>>>>>>>>>>>>>>> SECONDARY MESSAGES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // >>>>>>>>>>>>>>>>>>>>>>>>>> SECONDARY MESSAGES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        // 41 🟢 Remove A Store Bookmark
+        // 40 🟢 Remove A Store Bookmark
         #[ink(message)]
         pub fn remove_store_bookmark (&mut self, 
             seller: AccountId,

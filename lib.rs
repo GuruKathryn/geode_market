@@ -133,6 +133,67 @@ mod geode_marketplace {
             scale_info::TypeInfo, Debug, PartialEq, Eq
         )
     )]
+    pub struct PublicProduct { 
+        product_id: Hash,
+        digital: bool,
+        title: Vec<u8>,
+        price: Balance,
+        brand: Vec<u8>,
+        category: Vec<u8>,
+        seller_account: AccountId,
+        seller_name: Vec<u8>,
+        description: Vec<u8>,
+        review_average: u64,
+        review_count: u64,
+        reviews: Vec<ProductServiceReview>,
+        inventory: u128, 
+        photo_or_youtube_link1: Vec<u8>, 
+        photo_or_youtube_link2: Vec<u8>,
+        photo_or_youtube_link3: Vec<u8>,
+        more_info_link: Vec<u8>,
+        delivery_info: Vec<u8>,
+        product_location: Vec<u8>,
+        // include zip code, city, state, country, etc
+        zeno_percent: u128,
+        // must be 0-100, default is 0
+        zeno_buyers: Vec<AccountId>
+        // tracks the first 20 buyers for zeno's incentive
+    }
+
+    impl Default for PublicProduct {
+        fn default() -> PublicProduct {
+            PublicProduct {
+                product_id: Hash::default(),
+                digital: bool::default(),
+                title: <Vec<u8>>::default(),
+                price: Balance::default(),
+                brand:<Vec<u8>>::default(),
+                category: <Vec<u8>>::default(),
+                seller_account: ZERO_ADDRESS.into(),
+                seller_name: <Vec<u8>>::default(),
+                description: <Vec<u8>>::default(),
+                review_average: u64::default(),
+                review_count: u64::default(), 
+                reviews: <Vec<ProductServiceReview>>::default(),
+                inventory: u128::default(), 
+                photo_or_youtube_link1: <Vec<u8>>::default(), 
+                photo_or_youtube_link2: <Vec<u8>>::default(),
+                photo_or_youtube_link3: <Vec<u8>>::default(),
+                more_info_link: <Vec<u8>>::default(),
+                delivery_info: <Vec<u8>>::default(),
+                product_location: <Vec<u8>>::default(),
+                zeno_percent: 0,
+                zeno_buyers: <Vec<AccountId>>::default()
+            }
+        }
+    }
+
+    #[derive(Clone, scale::Decode, scale::Encode)]
+    #[cfg_attr(feature = "std",
+        derive(ink::storage::traits::StorageLayout, 
+            scale_info::TypeInfo, Debug, PartialEq, Eq
+        )
+    )]
     pub struct Service { 
         service_id: Hash,
         online: bool,
@@ -823,7 +884,7 @@ mod geode_marketplace {
     )]
     pub struct ViewStore {
         owner: SellerProfile,
-        products: Vec<Product>,
+        products: Vec<PublicProduct>,
         services: Vec<Service>
     }
 
@@ -831,7 +892,7 @@ mod geode_marketplace {
         fn default() -> ViewStore {
             ViewStore {
                 owner: SellerProfile::default(),
-                products: <Vec<Product>>::default(),
+                products: <Vec<PublicProduct>>::default(),
                 services: <Vec<Service>>::default()
             }
         }
@@ -926,14 +987,14 @@ mod geode_marketplace {
         )
     )]
     pub struct ViewZeno {
-        products: Vec<Product>,
+        products: Vec<PublicProduct>,
         services: Vec<Service>
     }
 
     impl Default for ViewZeno {
         fn default() -> ViewZeno {
             ViewZeno {
-                products: <Vec<Product>>::default(),
+                products: <Vec<PublicProduct>>::default(),
                 services: <Vec<Service>>::default()
             }
         }
@@ -3039,7 +3100,7 @@ mod geode_marketplace {
         ) -> ProductSearchResults {
 
             // set up return structures
-            let mut product_results = <Vec<Product>>::default();
+            let mut product_results = <Vec<PublicProduct>>::default();
 
             // iterate over all_products: Vec<Hash> to find matching results
             for item in self.all_products.iter() {
@@ -3061,8 +3122,33 @@ mod geode_marketplace {
                 category_string.contains(&target_string) || description_string.contains(&target_string) ||
                 delivery_string.contains(&target_string) || location_string.contains(&target_string) ||
                 seller_string.contains(&target_string) {
+                    // make the public product structure
+                    let public_product = PublicProduct {
+                        product_id: details.product_id,
+                        digital: details.digital,
+                        title: details.title,
+                        price: details.price,
+                        brand: details.brand,
+                        category: details.category,
+                        seller_account: details.seller_account,
+                        seller_name: details.seller_name,
+                        description: details.description,
+                        review_average: details.review_average,
+                        review_count: details.review_count,
+                        reviews: details.reviews,
+                        inventory: details.inventory, 
+                        photo_or_youtube_link1: details.photo_or_youtube_link1, 
+                        photo_or_youtube_link2: details.photo_or_youtube_link2,
+                        photo_or_youtube_link3: details.photo_or_youtube_link3,
+                        more_info_link: deatils.more_info_link,
+                        delivery_info: details.delivery_info,
+                        product_location: details.product_location,
+                        zeno_percent: details.zeno_percent,
+                        zeno_buyers: details.zeno_buyers
+                    };
+
                     // add it to the results vector
-                    product_results.push(details);
+                    product_results.push(public_product);
                 }
                 //continue iterating
             }
@@ -3133,11 +3219,11 @@ mod geode_marketplace {
             // iterate over all_sellers: Vec<AccountId> to find matching results
             for acct in self.all_sellers.iter() {
                 // get the details
-                let details = self.account_profile_seller.get(acct).unwrap_or_default();
+                let profile = self.account_profile_seller.get(acct).unwrap_or_default();
                 // check to see if the keywords are there
-                let name_string = String::from_utf8(details.seller_name.clone()).unwrap_or_default();
-                let description_string = String::from_utf8(details.store_description.clone()).unwrap_or_default();
-                let location_string = String::from_utf8(details.seller_location.clone()).unwrap_or_default();
+                let name_string = String::from_utf8(profile.seller_name.clone()).unwrap_or_default();
+                let description_string = String::from_utf8(profile.store_description.clone()).unwrap_or_default();
+                let location_string = String::from_utf8(profile.seller_location.clone()).unwrap_or_default();
 
                 let targetvecu8 = keywords.clone();
                 let target_string = String::from_utf8(targetvecu8).unwrap_or_default();
@@ -3145,15 +3231,39 @@ mod geode_marketplace {
                 if name_string.contains(&target_string) || description_string.contains(&target_string) ||
                 location_string.contains(&target_string) {
 
-                    let mut store_products = <Vec<Product>>::default();
+                    let mut store_products = <Vec<PublicProduct>>::default();
                     let mut store_services = <Vec<Service>>::default();
                     
                     // get the seller's products from account_seller_products: Mapping<AccountId, HashVector>
                     let product_ids = self.account_seller_products.get(&acct).unwrap_or_default();
                     for id in product_ids.hashvector.iter() {
                         // get the product details struct and add it to the store_products vector
-                        let productdetails = self.product_details.get(id).unwrap_or_default();
-                        store_products.push(productdetails);
+                        let details = self.product_details.get(id).unwrap_or_default();
+                        // make the public product structure
+                        let public_product = PublicProduct {
+                            product_id: details.product_id,
+                            digital: details.digital,
+                            title: details.title,
+                            price: details.price,
+                            brand: details.brand,
+                            category: details.category,
+                            seller_account: details.seller_account,
+                            seller_name: details.seller_name,
+                            description: details.description,
+                            review_average: details.review_average,
+                            review_count: details.review_count,
+                            reviews: details.reviews,
+                            inventory: details.inventory, 
+                            photo_or_youtube_link1: details.photo_or_youtube_link1, 
+                            photo_or_youtube_link2: details.photo_or_youtube_link2,
+                            photo_or_youtube_link3: details.photo_or_youtube_link3,
+                            more_info_link: deatils.more_info_link,
+                            delivery_info: details.delivery_info,
+                            product_location: details.product_location,
+                            zeno_percent: details.zeno_percent,
+                            zeno_buyers: details.zeno_buyers
+                        };
+                        store_products.push(public_product);
                     }
 
                     // get the seller's services from account_seller_services: Mapping<AccountId, HashVector> 
@@ -3449,15 +3559,39 @@ mod geode_marketplace {
             // get the seller's profile from account_profile_seller: Mapping<AccountId, SellerProfile>
             let store_owner = self.account_profile_seller.get(&seller).unwrap_or_default();
             // set up return structures
-            let mut store_products = <Vec<Product>>::default();
+            let mut store_products = <Vec<PublicProduct>>::default();
             let mut store_services = <Vec<Service>>::default();
 
             // get the seller's products from account_seller_products: Mapping<AccountId, HashVector>
             let product_ids = self.account_seller_products.get(&seller).unwrap_or_default();
             for id in product_ids.hashvector.iter() {
                 // get the product details struct and add it to the store_products vector
-                let productdetails = self.product_details.get(id).unwrap_or_default();
-                store_products.push(productdetails);
+                let details = self.product_details.get(id).unwrap_or_default();
+                // make the public product structure
+                let public_product = PublicProduct {
+                    product_id: details.product_id,
+                    digital: details.digital,
+                    title: details.title,
+                    price: details.price,
+                    brand: details.brand,
+                    category: details.category,
+                    seller_account: details.seller_account,
+                    seller_name: details.seller_name,
+                    description: details.description,
+                    review_average: details.review_average,
+                    review_count: details.review_count,
+                    reviews: details.reviews,
+                    inventory: details.inventory, 
+                    photo_or_youtube_link1: details.photo_or_youtube_link1, 
+                    photo_or_youtube_link2: details.photo_or_youtube_link2,
+                    photo_or_youtube_link3: details.photo_or_youtube_link3,
+                    more_info_link: deatils.more_info_link,
+                    delivery_info: details.delivery_info,
+                    product_location: details.product_location,
+                    zeno_percent: details.zeno_percent,
+                    zeno_buyers: details.zeno_buyers
+                };
+                store_products.push(public_product);
             }
 
             // get the seller's services from account_seller_services: Mapping<AccountId, HashVector> 
@@ -3576,23 +3710,66 @@ mod geode_marketplace {
 
 
         // 40 🟢 Find Products And Services By Zeno Incentive
-        // returns products and services that have zeno_percent > 0 AND < 20 zeno buyers
+        // returns products and services by keyword with zeno_percent > 0 AND < 20 zeno buyers
         #[ink(message)]
-        pub fn search_by_zeno (&self) -> ViewZeno {
+        pub fn search_by_zeno (&self, keywords: Vec<u8>) -> ViewZeno {
             // set up return structures
-            let mut store_products = <Vec<Product>>::default();
+            let mut store_products = <Vec<PublicProduct>>::default();
             let mut store_services = <Vec<Service>>::default();
 
             // get the set of all products from all_products: Vec<Hash>
             let product_ids = &self.all_products;
             for id in product_ids.iter() {
                 // get the product details struct 
-                let productdetails = self.product_details.get(id).unwrap_or_default();
-                // check for zeno_percent > 0 AND zeno_buyers < 20
-                let count: u128 = productdetails.zeno_buyers.len().try_into().unwrap();
-                if productdetails.zeno_percent > 0 && count < 20 {
-                    // add it to the store_products vector
-                    store_products.push(productdetails);
+                let details = self.product_details.get(id).unwrap_or_default();
+                // check to see if the keywords are there
+                let title_string = String::from_utf8(details.title.clone()).unwrap_or_default();
+                let seller_string = String::from_utf8(details.seller_name.clone()).unwrap_or_default();
+                let brand_string = String::from_utf8(details.brand.clone()).unwrap_or_default();
+                let category_string = String::from_utf8(details.category.clone()).unwrap_or_default();
+                let description_string = String::from_utf8(details.description.clone()).unwrap_or_default();
+                let delivery_string = String::from_utf8(details.delivery_info.clone()).unwrap_or_default();
+                let location_string = String::from_utf8(details.product_location.clone()).unwrap_or_default();
+
+                let targetvecu8 = keywords.clone();
+                let target_string = String::from_utf8(targetvecu8).unwrap_or_default();
+
+                // if the target_string is in the details
+                if title_string.contains(&target_string) || brand_string.contains(&target_string) ||
+                category_string.contains(&target_string) || description_string.contains(&target_string) ||
+                delivery_string.contains(&target_string) || location_string.contains(&target_string) ||
+                seller_string.contains(&target_string) {
+
+                    // then check for zeno_percent > 0 AND zeno_buyers < 20
+                    let count: u128 = details.zeno_buyers.len().try_into().unwrap();
+                    if details.zeno_percent > 0 && count < 20 {
+                        // make the public product structure
+                        let public_product = PublicProduct {
+                            product_id: details.product_id,
+                            digital: details.digital,
+                            title: details.title,
+                            price: details.price,
+                            brand: details.brand,
+                            category: details.category,
+                            seller_account: details.seller_account,
+                            seller_name: details.seller_name,
+                            description: details.description,
+                            review_average: details.review_average,
+                            review_count: details.review_count,
+                            reviews: details.reviews,
+                            inventory: details.inventory, 
+                            photo_or_youtube_link1: details.photo_or_youtube_link1, 
+                            photo_or_youtube_link2: details.photo_or_youtube_link2,
+                            photo_or_youtube_link3: details.photo_or_youtube_link3,
+                            more_info_link: deatils.more_info_link,
+                            delivery_info: details.delivery_info,
+                            product_location: details.product_location,
+                            zeno_percent: details.zeno_percent,
+                            zeno_buyers: details.zeno_buyers
+                        };
+                        // add it to the store_products vector
+                        store_products.push(public_product);
+                    }
                 }
             }
 
@@ -3601,11 +3778,28 @@ mod geode_marketplace {
             for id in service_ids.iter() {
                 // get the service details struct 
                 let servicedetails = self.service_details.get(id).unwrap_or_default();
-                // check for zeno_percent > 0 AND zeno_buyers < 20
-                let count: u128 = servicedetails.zeno_buyers.len().try_into().unwrap();
-                if servicedetails.zeno_percent > 0 && count < 20 {
-                    // add it to the store_services vector
-                    store_services.push(servicedetails);
+
+                // check to see if the keywords are there
+                let title_string = String::from_utf8(servicedetails.title.clone()).unwrap_or_default();
+                let seller_string = String::from_utf8(servicedetails.seller_name.clone()).unwrap_or_default();
+                let category_string = String::from_utf8(servicedetails.category.clone()).unwrap_or_default();
+                let description_string = String::from_utf8(servicedetails.description.clone()).unwrap_or_default();
+                let location_string = String::from_utf8(servicedetails.service_location.clone()).unwrap_or_default();
+
+                let targetvec = keywords.clone();
+                let target_string = String::from_utf8(targetvec).unwrap_or_default();
+
+                // if the target_string is in the details
+                if title_string.contains(&target_string) || seller_string.contains(&target_string) ||
+                category_string.contains(&target_string) || description_string.contains(&target_string) ||
+                location_string.contains(&target_string) {
+
+                    // check for zeno_percent > 0 AND zeno_buyers < 20
+                    let count: u128 = servicedetails.zeno_buyers.len().try_into().unwrap();
+                    if servicedetails.zeno_percent > 0 && count < 20 {
+                        // add it to the store_services vector
+                        store_services.push(servicedetails);
+                    }
                 }
             }
 

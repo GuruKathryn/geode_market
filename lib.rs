@@ -715,14 +715,14 @@ mod geode_marketplace {
     )]
     pub struct ProductSearchResults {
         search: Vec<u8>,
-        products: Vec<Product>
+        products: Vec<PublicProduct>
     }
 
     impl Default for ProductSearchResults {
         fn default() -> ProductSearchResults {
             ProductSearchResults {
                 search: <Vec<u8>>::default(),
-                products: <Vec<Product>>::default()
+                products: <Vec<PublicProduct>>::default()
             }
         }
     }
@@ -3140,7 +3140,7 @@ mod geode_marketplace {
                         photo_or_youtube_link1: details.photo_or_youtube_link1, 
                         photo_or_youtube_link2: details.photo_or_youtube_link2,
                         photo_or_youtube_link3: details.photo_or_youtube_link3,
-                        more_info_link: deatils.more_info_link,
+                        more_info_link: details.more_info_link,
                         delivery_info: details.delivery_info,
                         product_location: details.product_location,
                         zeno_percent: details.zeno_percent,
@@ -3257,7 +3257,7 @@ mod geode_marketplace {
                             photo_or_youtube_link1: details.photo_or_youtube_link1, 
                             photo_or_youtube_link2: details.photo_or_youtube_link2,
                             photo_or_youtube_link3: details.photo_or_youtube_link3,
-                            more_info_link: deatils.more_info_link,
+                            more_info_link: details.more_info_link,
                             delivery_info: details.delivery_info,
                             product_location: details.product_location,
                             zeno_percent: details.zeno_percent,
@@ -3276,7 +3276,7 @@ mod geode_marketplace {
 
                     // package the store information
                     let store = ViewStore {
-                        owner: details,
+                        owner: profile,
                         products: store_products,
                         services: store_services
                     };
@@ -3585,7 +3585,7 @@ mod geode_marketplace {
                     photo_or_youtube_link1: details.photo_or_youtube_link1, 
                     photo_or_youtube_link2: details.photo_or_youtube_link2,
                     photo_or_youtube_link3: details.photo_or_youtube_link3,
-                    more_info_link: deatils.more_info_link,
+                    more_info_link: details.more_info_link,
                     delivery_info: details.delivery_info,
                     product_location: details.product_location,
                     zeno_percent: details.zeno_percent,
@@ -3761,7 +3761,7 @@ mod geode_marketplace {
                             photo_or_youtube_link1: details.photo_or_youtube_link1, 
                             photo_or_youtube_link2: details.photo_or_youtube_link2,
                             photo_or_youtube_link3: details.photo_or_youtube_link3,
-                            more_info_link: deatils.more_info_link,
+                            more_info_link: details.more_info_link,
                             delivery_info: details.delivery_info,
                             product_location: details.product_location,
                             zeno_percent: details.zeno_percent,

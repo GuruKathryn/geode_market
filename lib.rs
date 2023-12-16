@@ -381,7 +381,7 @@ mod geode_marketplace {
         tracking_info: Vec<u8>,
         order_status: u8, 
         time_delivered: u64,
-        discussion: Vec<Hash>,
+        discussion: Vec<MessageDetails>,
         problem: u8,
         resolution: u8,
         zeno_total: Balance
@@ -413,7 +413,7 @@ mod geode_marketplace {
                 tracking_info: <Vec<u8>>::default(),
                 order_status: 0, 
                 time_delivered: u64::default(),
-                discussion: <Vec<Hash>>::default(),
+                discussion: <Vec<MessageDetails>>::default(),
                 problem: 0,
                 resolution: 0,
                 zeno_total: Balance::default()
@@ -1655,7 +1655,7 @@ mod geode_marketplace {
                         tracking_info: <Vec<u8>>::default(),
                         order_status: status, 
                         time_delivered: u64::default(),
-                        discussion: <Vec<Hash>>::default(),
+                        discussion: <Vec<MessageDetails>>::default(),
                         problem: 0,
                         resolution: 0,
                         zeno_total: item_zeno_total
@@ -2188,10 +2188,7 @@ mod geode_marketplace {
                 let mut new_id_u8 = <Sha2x256 as HashOutput>::Type::default(); // 256-bit buffer
                 ink::env::hash_encoded::<Sha2x256, _>(&encodable, &mut new_id_u8);
                 let new_message_id: Hash = Hash::from(new_id_u8);
-                // update order discussion
-                details.discussion.push(new_message_id);
-                // update order_details: Mapping<Hash, Order>
-                self.order_details.insert(&order_id, &details);
+                
                 // update message_details: Mapping<Hash, MessageDetails>
                 let message_details = MessageDetails {
                     message_id: new_message_id,
@@ -2203,6 +2200,10 @@ mod geode_marketplace {
                     timestamp: now
                 };
                 self.message_details.insert(&new_message_id, &message_details);
+                // update order discussion
+                details.discussion.push(message_details);
+                // update order_details: Mapping<Hash, Order>
+                self.order_details.insert(&order_id, &details);
             }
             else {
                 return Err(Error::NotYourOrder)
@@ -2690,10 +2691,7 @@ mod geode_marketplace {
                 let mut new_id_u8 = <Sha2x256 as HashOutput>::Type::default(); // 256-bit buffer
                 ink::env::hash_encoded::<Sha2x256, _>(&encodable, &mut new_id_u8);
                 let new_message_id: Hash = Hash::from(new_id_u8);
-                // update order discussion
-                details.discussion.push(new_message_id);
-                // update order_details: Mapping<Hash, Order>
-                self.order_details.insert(&order_id, &details);
+                
                 // update message_details: Mapping<Hash, MessageDetails>
                 let message_details = MessageDetails {
                     message_id: new_message_id,
@@ -2705,6 +2703,10 @@ mod geode_marketplace {
                     timestamp: now
                 };
                 self.message_details.insert(&new_message_id, &message_details);
+                // update order discussion
+                details.discussion.push(message_details);
+                // update order_details: Mapping<Hash, Order>
+                self.order_details.insert(&order_id, &details);
             }
             else {
                 return Err(Error::NotYourOrder)

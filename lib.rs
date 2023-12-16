@@ -1091,14 +1091,11 @@ mod geode_marketplace {
         account_current_cart: Mapping<AccountId, UnpaidCart>,
         account_seller_products: Mapping<AccountId, HashVector>,
         account_seller_services: Mapping<AccountId, HashVector>,
-        message_details: Mapping<Hash, MessageDetails>,
         product_details: Mapping<Hash, Product>,
         service_details: Mapping<Hash, Service>,
         order_details: Mapping<Hash, Order>,
         product_list_details: Mapping<Hash, ProductList>,
         service_list_details: Mapping<Hash, ServiceList>,
-        item_review_details: Mapping<Hash, ProductServiceReview>,
-        account_review_details: Mapping<Hash, BuyerSellerReview>,
     }
 
 
@@ -1134,14 +1131,11 @@ mod geode_marketplace {
                 account_current_cart: Mapping::default(),
                 account_seller_products: Mapping::default(),
                 account_seller_services: Mapping::default(),
-                message_details: Mapping::default(),
                 product_details: Mapping::default(),
                 service_details: Mapping::default(),
                 order_details: Mapping::default(),
                 product_list_details: Mapping::default(),
                 service_list_details: Mapping::default(),
-                item_review_details: Mapping::default(),
-                account_review_details: Mapping::default(),
             }
         }
 
@@ -1834,9 +1828,6 @@ mod geode_marketplace {
                         let review_clone3 = thisreview.clone();
                         
                         // update mappings...
-
-                        // item_review_details: Mapping<Hash, ProductServiceReview>
-                        self.item_review_details.insert(&new_review_id, &thisreview);
                         // account_buyer_items_reviewed: Mapping<AccountId, HashVector>
                         reviewed.hashvector.push(item_id);
                         self.account_buyer_items_reviewed.insert(&caller, &reviewed);
@@ -1991,7 +1982,6 @@ mod geode_marketplace {
                         media_url: problem_photo_or_youtube_url,
                         timestamp: now
                     };
-                    self.message_details.insert(&new_message_id, &message_details);
                     
                     // update order details
                     details.order_status = 4;
@@ -2064,7 +2054,6 @@ mod geode_marketplace {
                         media_url: problem_photo_or_youtube_url,
                         timestamp: now
                     };
-                    self.message_details.insert(&new_message_id, &message_details);
 
                     // update order details
                     details.order_status = 4;
@@ -2137,7 +2126,6 @@ mod geode_marketplace {
                         media_url: problem_photo_or_youtube_url,
                         timestamp: now
                     };
-                    self.message_details.insert(&new_message_id, &message_details);
 
                     // update order details
                     details.order_status = 4;
@@ -2205,7 +2193,7 @@ mod geode_marketplace {
                     media_url: photo_or_youtube_url,
                     timestamp: now
                 };
-                self.message_details.insert(&new_message_id, &message_details);
+
                 // update order discussion
                 details.discussion.push(message_details);
                 // update order_details: Mapping<Hash, Order>
@@ -2708,7 +2696,7 @@ mod geode_marketplace {
                     media_url: photo_or_youtube_url,
                     timestamp: now
                 };
-                self.message_details.insert(&new_message_id, &message_details);
+
                 // update order discussion
                 details.discussion.push(message_details);
                 // update order_details: Mapping<Hash, Order>
@@ -2763,8 +2751,6 @@ mod geode_marketplace {
                         };
 
                         // update mappings...
-                        // account_review_details: Mapping<Hash, BuyerSellerReview>
-                        self.account_review_details.insert(&new_review_id, &review);
                         // account_seller_buyers_reviewed: Mapping<AccountId, AccountVector>
                         reviewed.accountvector.push(buyer);
                         self.account_seller_buyers_reviewed.insert(&caller, &reviewed);
@@ -2773,7 +2759,7 @@ mod geode_marketplace {
                         profile.reviews.push(review);
                         // recalculate the review count
                         profile.review_count = profile.reviews.len().try_into().unwrap();
-                        // recalcualte the review average
+                        // recalculate the review average
                         let mut sum = u64::default();
                         for item in profile.reviews.iter() {
                             sum += item.rating;

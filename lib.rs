@@ -3621,10 +3621,27 @@ mod geode_marketplace {
 
 
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        // >>>>>>>>>>>>>>>>>>>>>>>>>> SECONDARY GET MESSAGES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        // >>>>>>>>>>>>>>>>>>>>>>>>>> SECONDARY MESSAGES <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-        // no secondary messages in this contract
+        // 41 🟢 Remove A Store Bookmark
+        #[ink(message)]
+        pub fn remove_store_bookmark (&mut self, 
+            seller: AccountId,
+        ) -> Result<(), Error> {
+            // set up the caller
+            let caller = Self::env().caller();
+            // get the account_store_boookmarks list
+            let mut my_list = self.account_store_bookmarks.get(&caller).unwrap_or_default();
+            if my_list.accountvector.contains(&seller) {
+                // remove the store account from the bookmark list
+                my_list.accountvector.retain(|value| *value != seller);
+                // update mapping account_store_bookmarks: Mapping<AccountId, AccountVector>
+                self.account_store_bookmarks.insert(&caller, &my_list);
+            }
+            
+            Ok(())
+        }
 
         // END OF MESSAGE LIST
 

@@ -1980,12 +1980,7 @@ mod geode_marketplace {
                     let mut new_id_u8 = <Sha2x256 as HashOutput>::Type::default(); // 256-bit buffer
                     ink::env::hash_encoded::<Sha2x256, _>(&encodable, &mut new_id_u8);
                     let new_message_id: Hash = Hash::from(new_id_u8);
-                    // update order details
-                    details.order_status = 4;
-                    details.problem = 1;
-                    details.discussion.push(new_message_id);
-                    // update order_details: Mapping<Hash, Order>
-                    self.order_details.insert(&order_id, &details);
+                    
                     // update message_details: Mapping<Hash, MessageDetails>
                     let message_details = MessageDetails {
                         message_id: new_message_id,
@@ -1997,6 +1992,13 @@ mod geode_marketplace {
                         timestamp: now
                     };
                     self.message_details.insert(&new_message_id, &message_details);
+                    
+                    // update order details
+                    details.order_status = 4;
+                    details.problem = 1;
+                    details.discussion.push(message_details);
+                    // update order_details: Mapping<Hash, Order>
+                    self.order_details.insert(&order_id, &details);
 
                     // update Buyer profile
                     // account_profile_buyer: Mapping<AccountId, BuyerProfile>
@@ -2051,12 +2053,7 @@ mod geode_marketplace {
                     let mut new_id_u8 = <Sha2x256 as HashOutput>::Type::default(); // 256-bit buffer
                     ink::env::hash_encoded::<Sha2x256, _>(&encodable, &mut new_id_u8);
                     let new_message_id: Hash = Hash::from(new_id_u8);
-                    // update order details
-                    details.order_status = 4;
-                    details.problem = 2;
-                    details.discussion.push(new_message_id);
-                    // update order_details: Mapping<Hash, Order>
-                    self.order_details.insert(&order_id, &details);
+                    
                     // update message_details: Mapping<Hash, MessageDetails>
                     let message_details = MessageDetails {
                         message_id: new_message_id,
@@ -2068,6 +2065,13 @@ mod geode_marketplace {
                         timestamp: now
                     };
                     self.message_details.insert(&new_message_id, &message_details);
+
+                    // update order details
+                    details.order_status = 4;
+                    details.problem = 2;
+                    details.discussion.push(message_details);
+                    // update order_details: Mapping<Hash, Order>
+                    self.order_details.insert(&order_id, &details);
 
                     // update Buyer profile
                     // account_profile_buyer: Mapping<AccountId, BuyerProfile>
@@ -2122,12 +2126,7 @@ mod geode_marketplace {
                     let mut new_id_u8 = <Sha2x256 as HashOutput>::Type::default(); // 256-bit buffer
                     ink::env::hash_encoded::<Sha2x256, _>(&encodable, &mut new_id_u8);
                     let new_message_id: Hash = Hash::from(new_id_u8);
-                    // update order details
-                    details.order_status = 4;
-                    details.problem = 3;
-                    details.discussion.push(new_message_id);
-                    // update order_details: Mapping<Hash, Order>
-                    self.order_details.insert(&order_id, &details);
+                    
                     // update message_details: Mapping<Hash, MessageDetails>
                     let message_details = MessageDetails {
                         message_id: new_message_id,
@@ -2139,6 +2138,13 @@ mod geode_marketplace {
                         timestamp: now
                     };
                     self.message_details.insert(&new_message_id, &message_details);
+
+                    // update order details
+                    details.order_status = 4;
+                    details.problem = 3;
+                    details.discussion.push(message_details);
+                    // update order_details: Mapping<Hash, Order>
+                    self.order_details.insert(&order_id, &details);
 
                     // update Buyer profile
                     // account_profile_buyer: Mapping<AccountId, BuyerProfile>

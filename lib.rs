@@ -1468,8 +1468,7 @@ mod geode_marketplace {
         #[ink(message, payable)]
         #[openbrush::modifiers(non_reentrant)]
         pub fn checkout_cart (&mut self, 
-            deliver_to_address: Vec<u8>,
-            deliver_to_account: AccountId
+            deliver_to_address: Vec<u8>
         ) -> Result<(), Error> {
             // set up the caller and timestamp
             let caller = Self::env().caller();
@@ -1629,7 +1628,7 @@ mod geode_marketplace {
                     let mut buyer_profile = self.account_profile_buyer.get(&caller).unwrap_or_default();
 
                     // set up the Order structure
-                    let new_order = Order {
+                    let mut new_order = Order {
                         order_id: new_order_id,
                         cart_id: new_cart_id,
                         order_timestamp: rightnow,
@@ -1645,7 +1644,7 @@ mod geode_marketplace {
                         price_each: item_price,
                         total_order_price: item_order_total,
                         deliver_to_address: deliver_to_address_clone1,
-                        deliver_to_account: deliver_to_account,
+                        deliver_to_account: caller,
                         tracking_info: <Vec<u8>>::default(),
                         order_status: status, 
                         time_delivered: u64::default(),
@@ -1654,17 +1653,6 @@ mod geode_marketplace {
                         resolution: 0,
                         zeno_total: item_zeno_total
                     };
-
-                    // update order_details: Mapping<Hash, Order>
-                    self.order_details.insert(new_order_id, &new_order);
-                    // update all_orders: Vec<Hash>
-                    self.all_orders.push(new_order_id);
-
-                    // update all_cart_orders, all_cart_items, total_items_count, and total_orders_count
-                    all_cart_orders.push(new_order);
-                    all_cart_items.push(*item);
-                    total_items_count += number;
-                    total_orders_count += 1;
 
                     // SPECIAL ACTIONS FOR DIGITAL PRODUCTS...
                     // if the item is a digital product, send ownership to the buyer and pay the seller
@@ -1680,6 +1668,10 @@ mod geode_marketplace {
                             // update account_owned_digital_items: Mapping<AccountId, HashVector>
                             self.account_owned_digital_items.insert(&caller, &owned);
                         }
+                        
+                        // mark the order as delivered
+                        new_order.time_delivered = rightnow;
+                        
                         // payout the seller for the digital product
                         // self.env().transfer(item_seller, item_order_total).expect("payout failed");
                         if self.env().transfer(item_seller, item_order_total).is_err() {
@@ -1689,12 +1681,26 @@ mod geode_marketplace {
 
                     // PAYOUT SERVICES
                     if item_is_service == true {
+                        // mark the order as delivered
+                        new_order.time_delivered = rightnow;
+                        
                         // payout the seller for the service
                         // self.env().transfer(item_seller, item_order_total).expect("payout failed");
                         if self.env().transfer(item_seller, item_order_total).is_err() {
                             return Err(Error::PayoutFailed);
                         }
                     }
+
+                    // update order_details: Mapping<Hash, Order>
+                    self.order_details.insert(new_order_id, &new_order);
+                    // update all_orders: Vec<Hash>
+                    self.all_orders.push(new_order_id);
+
+                    // update all_cart_orders, all_cart_items, total_items_count, and total_orders_count
+                    all_cart_orders.push(new_order);
+                    all_cart_items.push(*item);
+                    total_items_count += number;
+                    total_orders_count += 1;
                                         
                     // update account_buyer_orders: Mapping<AccountId, HashVector>
                     let mut buyer_orders = self.account_buyer_orders.get(&caller).unwrap_or_default();

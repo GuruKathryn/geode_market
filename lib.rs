@@ -1992,6 +1992,7 @@ mod geode_marketplace {
                     // update order details
                     details.order_status = 4;
                     details.problem = 1;
+                    details.resolution = 0;
                     details.discussion.push(message_details);
                     // update order_details: Mapping<Hash, Order>
                     self.order_details.insert(&order_id, &details);
@@ -2064,6 +2065,7 @@ mod geode_marketplace {
                     // update order details
                     details.order_status = 4;
                     details.problem = 2;
+                    details.resolution = 0;
                     details.discussion.push(message_details);
                     // update order_details: Mapping<Hash, Order>
                     self.order_details.insert(&order_id, &details);
@@ -2136,6 +2138,7 @@ mod geode_marketplace {
                     // update order details
                     details.order_status = 4;
                     details.problem = 3;
+                    details.resolution = 0;
                     details.discussion.push(message_details);
                     // update order_details: Mapping<Hash, Order>
                     self.order_details.insert(&order_id, &details);

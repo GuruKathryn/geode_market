@@ -1992,7 +1992,6 @@ mod geode_marketplace {
                     // update order details
                     details.order_status = 4;
                     details.problem = 1;
-                    details.resolution = 0;
                     details.discussion.push(message_details);
                     // update order_details: Mapping<Hash, Order>
                     self.order_details.insert(&order_id, &details);
@@ -2065,7 +2064,6 @@ mod geode_marketplace {
                     // update order details
                     details.order_status = 4;
                     details.problem = 2;
-                    details.resolution = 0;
                     details.discussion.push(message_details);
                     // update order_details: Mapping<Hash, Order>
                     self.order_details.insert(&order_id, &details);
@@ -2138,7 +2136,6 @@ mod geode_marketplace {
                     // update order details
                     details.order_status = 4;
                     details.problem = 3;
-                    details.resolution = 0;
                     details.discussion.push(message_details);
                     // update order_details: Mapping<Hash, Order>
                     self.order_details.insert(&order_id, &details);
@@ -2497,7 +2494,7 @@ mod geode_marketplace {
                     
                     // issue a refund to the buyer for this order
                     let buyer = details.buyer;
-                    let refund: Balance = details.total_order_price - details.zeno_total;
+                    let refund: Balance = details.total_order_price;
                     // self.env().transfer(buyer, refund).expect("payout failed");
                     if self.env().transfer(buyer, refund).is_err() {
                         return Err(Error::PayoutFailed);
@@ -2533,15 +2530,14 @@ mod geode_marketplace {
 
         // 22 🟢 Issue Refund
         // note that refunds are issued as a resolution to a problem
-        // refunds do not include any zeno percent paid when the item shipped
-        #[ink(message)]
+        // seller inputs the refund amount from their own account since payouts already happened
+        #[ink(message, payable)]
         #[openbrush::modifiers(non_reentrant)]
         pub fn issue_refund (&mut self, 
             order_id: Hash,
         ) -> Result<(), Error> {
             // set up the caller
             let caller = Self::env().caller();
-
             // make sure the caller is the seller on this order
             // account_seller_orders: Mapping<AccountId, HashVector>
             let myorders = self.account_seller_orders.get(&caller).unwrap_or_default();
@@ -2550,10 +2546,13 @@ mod geode_marketplace {
                 // Status must be 4 and resolution must be 0.
                 let mut details = self.order_details.get(&order_id).unwrap_or_default();
                 if details.order_status == 4 && details.resolution == 0 {
+
+                    // COLLECT PAYMENT FROM THE CALLER
+                    // the 'payable' tag on this message allows the user to send any amount
+                    let refund: Balance = self.env().transferred_value();
                     
                     // issue a refund to the buyer for this order
                     let buyer = details.buyer;
-                    let refund: Balance = details.total_order_price - details.zeno_total;
                     // self.env().transfer(buyer, refund).expect("payout failed");
                     if self.env().transfer(buyer, refund).is_err() {
                         return Err(Error::PayoutFailed);

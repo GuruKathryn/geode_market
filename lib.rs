@@ -2494,7 +2494,7 @@ mod geode_marketplace {
                     
                     // issue a refund to the buyer for this order
                     let buyer = details.buyer;
-                    let refund: Balance = details.total_order_price;
+                    let refund: Balance = details.total_order_price - details.zeno_total;
                     // self.env().transfer(buyer, refund).expect("payout failed");
                     if self.env().transfer(buyer, refund).is_err() {
                         return Err(Error::PayoutFailed);

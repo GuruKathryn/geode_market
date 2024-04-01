@@ -2322,6 +2322,12 @@ mod geode_marketplace {
                                 self.account_seller_orders_0awaiting.insert(caller, &awaiting);
                                 self.account_seller_orders_1shipped.insert(caller, &shipped);
 
+                                // update Seller profile
+                                // account_profile_seller: Mapping<AccountId, SellerProfile>
+                                let mut sellerprofile = self.account_profile_seller.get(caller).unwrap_or_default();
+                                sellerprofile.awaiting = sellerprofile.awaiting.saturating_sub(1);
+                                self.account_profile_seller.insert(caller, &sellerprofile);
+
                                 // EMIT EVENT OrderShipped
                                 Self::env().emit_event(OrderShipped {
                                     seller: caller,
@@ -2433,6 +2439,7 @@ mod geode_marketplace {
                     // account_profile_seller: Mapping<AccountId, SellerProfile>
                     let mut sellerprofile = self.account_profile_seller.get(caller).unwrap_or_default();
                     sellerprofile.total_refused = sellerprofile.total_refused.saturating_add(1);
+                    sellerprofile.awaiting = sellerprofile.awaiting.saturating_sub(1);
                     self.account_profile_seller.insert(caller, &sellerprofile);
 
                     // EMIT EVENT OrderRefused 

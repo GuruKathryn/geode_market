@@ -2427,7 +2427,7 @@ mod geode_marketplace {
                     refused.hashvector.push(order_id);
                     // update the maps
                     self.account_seller_orders_0awaiting.insert(caller, &awaiting);
-                    self.account_seller_orders_1shipped.insert(caller, &refused);
+                    self.account_seller_orders_5refused.insert(caller, &refused);
 
                     // update Buyer profile
                     // account_profile_buyer: Mapping<AccountId, BuyerProfile>
